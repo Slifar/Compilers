@@ -58,6 +58,7 @@ namespace Compilers_Project
             this.addToken("relop", Global_Vars.relopTokenType, "null");
             this.addToken("addop", Global_Vars.addopTokenType, "null");
             this.addToken("mulop", Global_Vars.mulopTokenType, "null");
+            this.addToken("LEXERR", Global_Vars.lexErrTokenType, "null");
         }
         #endregion
     }
