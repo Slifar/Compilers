@@ -59,6 +59,7 @@
     <Compile Include="Machines\IDRES_Machine.cs" />
     <Compile Include="Machines\Int_Machine.cs" />
     <Compile Include="Machines\Mulop_Machine.cs" />
+    <Compile Include="Machines\Real_Machine.cs" />
     <Compile Include="Machines\Relop_Machine.cs" />
     <Compile Include="Machines\Whitespace_Machine.cs" />
     <Compile Include="Program.cs" />
