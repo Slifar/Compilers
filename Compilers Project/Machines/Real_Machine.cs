@@ -76,11 +76,11 @@ namespace Compilers_Project.Machines
                 Global_Vars.backPointer = Global_Vars.frontPointer;
                 if (currentString.Length > Global_Vars.Max_Int_Length)
                 {
-                    Global_Vars.outputWriter.write(Global_Vars.intTooLongError);
+                    Global_Vars.outputWriter.writeError(Global_Vars.intTooLongError);
                 }
                 else if (currentString.Length > 1 && firstDigitZero)
                 {
-                    Global_Vars.outputWriter.write(Global_Vars.intLeadingZeroesError);
+                    Global_Vars.outputWriter.writeError(Global_Vars.intLeadingZeroesError);
                 }
                 else
                 {

@@ -39,7 +39,7 @@ namespace Compilers_Project.Machines
             {
                 if (currentString.Length > 10)
                 {
-                    Global_Vars.outputWriter.write(Global_Vars.lengthTooLongError);
+                    Global_Vars.outputWriter.writeError(Global_Vars.lengthTooLongError);
                     //Global_Vars.tokenOutput += Global_Vars.currentLineNumber + ", " + currentString + ", 99, 2\n";
                     Token token = new Token();
                     token.lexeme = currentString;
