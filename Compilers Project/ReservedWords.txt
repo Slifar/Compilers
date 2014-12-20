@@ -1,0 +1,15 @@
+﻿var
+array
+of
+integer
+real
+procedure
+begin
+end
+if
+then
+else
+while
+do
+not
+program
