@@ -62,7 +62,6 @@ namespace Compilers_Project.Machines
 
         private void lookupID(string currentString)
         {
-            throw new NotImplementedException();
             if (Global_Vars.reservedWords.ContainsKey(currentString))
             {
                 Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, currentString);

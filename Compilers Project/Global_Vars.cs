@@ -19,8 +19,9 @@ namespace Compilers_Project
         public static int nextSymbolLocation = 0;
 
         public static int currentLineNumber = 1;
-        public static string ReservedWordFile;
+        public static string ReservedWordFile = "reservedWords.txt";
         public static string OutputFile;
+        public static string inputFile = "program.txt";
         public static Dictionary<string, Word> reservedWords = new Dictionary<string,Word>();
         public static Dictionary<string, Word> symbolTable = new Dictionary<string, Word>();
         public static File_Writer outputWriter = new File_Writer();
@@ -34,6 +35,7 @@ namespace Compilers_Project
         public const string postDecimalRealTooLongError = "Lexical Error 5: Too many digits after the decimal.";
         public const string intLeadingZeroesError = "Lexical Error 6: Number has leading zeroes.";
         public const string realTrailingZeroesError = "Lexical Error 7: Number has trailing zeroes.";
+        public const string bufferTooLongError = "Lexical Error 8: Line too long; Buffer overflowed.";
 
         public static string tokenOutput = "Line No, Lexeme, Token-Type, Attribute\n";
         public static Queue<Token> tokenQueue = new Queue<Token>();
@@ -49,11 +51,14 @@ namespace Compilers_Project
         public const int idTokenType = 7;
         
         public static int lexErrTokenType = 99;
-        public static string lengthTooLongAttributeNumber = "2";
-        public static string unrecognizedSymbolAttributeNumber = "1";
+        public static string lengthTooLongAttributeNumber = "1";
+        public static string unrecognizedSymbolAttributeNumber = "2";
         public static string intTooLongAttributeNumber = "3";
         public static string preDecimalRealTooLongAttributeNumber = "4";
         public static string postDecimalRealTooLongAttributeNumber = "5";
+        public static string leadingZeroesErrorAttributeNumber = "6";
+        public static string trailingZeroesErrorAttributeNumber = "7";
+        public static string bufferTooLongErrorAttributeNumber = "8";
 
         #endregion
 

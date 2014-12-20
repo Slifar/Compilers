@@ -11,5 +11,11 @@ namespace Compilers_Project
         public string lexeme;
         public int tokenType;
         public string attribute;
+        public string writeToken()
+        {
+            string toOutput;
+            toOutput = lineNum + " " + lexeme + " " + tokenType + " " + attribute;
+            return toOutput;
+        }
     }
 }

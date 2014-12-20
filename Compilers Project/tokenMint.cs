@@ -15,6 +15,7 @@ namespace Compilers_Project
             temp.lexeme = lexeme;
             temp.lineNum = -1;
             temp.tokenType = tokenType;
+            masterTokens.Add(temp.lexeme, temp);
         }
         public void mintNewToken(int lineNumber, string tokenName)
         {

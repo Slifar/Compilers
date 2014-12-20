@@ -34,6 +34,7 @@ namespace Compilers_Project.Machines
                         if (checking == '=')
                         {
                             state = greaterEquals;
+                            Global_Vars.frontPointer++;
                             break;
                         }
                         else
@@ -52,6 +53,7 @@ namespace Compilers_Project.Machines
                         if (checking == '=')
                         {
                             state = lessEquals;
+                            Global_Vars.frontPointer++;
                             break;
                         }
                         else
@@ -65,6 +67,7 @@ namespace Compilers_Project.Machines
                     else if (checking == '=')
                     {
                         state = equals;
+                        Global_Vars.frontPointer++;
                         break;
                     }
                     #endregion
@@ -76,10 +79,12 @@ namespace Compilers_Project.Machines
                         if (checking == '=')
                         {
                             state = assign;
+                            Global_Vars.frontPointer++;
                             break;
                         }
                     }
                     #endregion
+                    else break;
                 }
                 
             }
@@ -93,31 +98,37 @@ namespace Compilers_Project.Machines
                 if (state == greaterEquals)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "greaterEquals");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == greaterThan)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "greaterThan");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == lessThan)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "lessThan");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == lessEquals)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "lessEquals");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == assign)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "assign");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == equals)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "equals");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
             }

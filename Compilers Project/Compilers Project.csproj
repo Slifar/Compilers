@@ -56,6 +56,7 @@
     </Compile>
     <Compile Include="Global_Vars.cs" />
     <Compile Include="Machines\Addop_Machine.cs" />
+    <Compile Include="Machines\catchAll_Machine.cs" />
     <Compile Include="Machines\IDRES_Machine.cs" />
     <Compile Include="Machines\Int_Machine.cs" />
     <Compile Include="Machines\Mulop_Machine.cs" />
@@ -87,6 +88,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="program.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="ReservedWords.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

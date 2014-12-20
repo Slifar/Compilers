@@ -14,7 +14,7 @@ namespace Compilers_Project
         public void writeError(string toWrite)
         {
             string finalOutput = "Line " + Global_Vars.currentLineNumber + ": " + toWrite;
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
     }
 }

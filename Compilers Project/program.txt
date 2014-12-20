@@ -1,0 +1,12 @@
+program example(input, output);
+var x, y: integer;
+function gcd(a, b: integer): integer;
+begin
+	if b = 0 then gcd := a
+	else gcd := gcd(b, a mod b)
+end;
+12345678901
+1.1234567
+1.123
+0.123
+.

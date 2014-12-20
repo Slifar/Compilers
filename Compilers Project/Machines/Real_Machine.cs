@@ -64,6 +64,11 @@ namespace Compilers_Project.Machines
                 {
                     if (char.IsDigit(checking))
                     {
+                        if (checking == '0')
+                        {
+                            lastDigitZero = true;
+                        }
+                        else lastDigitZero = false;
                         currentString += checking;
                         postDecimalLength++;
                         Global_Vars.frontPointer++;
@@ -74,13 +79,45 @@ namespace Compilers_Project.Machines
             if (state == postDecimalState)
             {
                 Global_Vars.backPointer = Global_Vars.frontPointer;
-                if (currentString.Length > Global_Vars.Max_Int_Length)
+                if (preDecimalLength > Global_Vars.Max_Real_Front)
                 {
-                    Global_Vars.outputWriter.writeError(Global_Vars.intTooLongError);
+                    Global_Vars.outputWriter.writeError(Global_Vars.preDecimalRealTooLongAttributeNumber);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.preDecimalRealTooLongAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
+                }
+                else if (postDecimalLength > Global_Vars.Max_Real_Back)
+                {
+                    Global_Vars.outputWriter.writeError(Global_Vars.postDecimalRealTooLongAttributeNumber);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.postDecimalRealTooLongAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
                 }
                 else if (currentString.Length > 1 && firstDigitZero)
                 {
                     Global_Vars.outputWriter.writeError(Global_Vars.intLeadingZeroesError);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.leadingZeroesErrorAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
+                }
+                else if (currentString.Length > 1 && firstDigitZero)
+                {
+                    Global_Vars.outputWriter.writeError(Global_Vars.trailingZeroesErrorAttributeNumber);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.trailingZeroesErrorAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
                 }
                 else
                 {

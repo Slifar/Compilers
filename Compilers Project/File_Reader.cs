@@ -27,6 +27,28 @@ namespace Compilers_Project
                 word.attribute = split[2];
                 Global_Vars.reservedWords.Add(word.word, word);
             }
+            #region adding div, or, mod, and
+            Word divWord = new Word();
+            divWord.word = "div";
+            divWord.tokenType = "" + Global_Vars.mulopTokenType;
+            divWord.attribute = "null";
+            Global_Vars.reservedWords.Add(divWord.word, divWord);
+            divWord = new Word();
+            divWord.word = "or";
+            divWord.tokenType = "" + Global_Vars.addopTokenType;
+            divWord.attribute = "null";
+            Global_Vars.reservedWords.Add(divWord.word, divWord);
+            divWord = new Word();
+            divWord.word = "mod";
+            divWord.tokenType = "" + Global_Vars.mulopTokenType;
+            divWord.attribute = "null";
+            Global_Vars.reservedWords.Add(divWord.word, divWord);
+            divWord = new Word();
+            divWord.word = "and";
+            divWord.tokenType = "" + Global_Vars.mulopTokenType;
+            divWord.attribute = "null";
+            Global_Vars.reservedWords.Add(divWord.word, divWord);
+            #endregion
         }
     }
 }

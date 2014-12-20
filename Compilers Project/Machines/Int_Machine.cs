@@ -55,10 +55,22 @@ namespace Compilers_Project.Machines
                 if (currentString.Length > Global_Vars.Max_Int_Length)
                 {
                     Global_Vars.outputWriter.writeError(Global_Vars.intTooLongError);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.intTooLongAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
                 }
                 else if (currentString.Length > 1 && firstDigitZero)
                 {
                     Global_Vars.outputWriter.writeError(Global_Vars.intLeadingZeroesError);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.leadingZeroesErrorAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
                 }
                 else
                 {
