@@ -17,10 +17,11 @@ namespace Compilers_Project
         public static int Max_Real_Power = 2;
 
         public static int nextSymbolLocation = 0;
+        public static bool EOFReached = false;
 
         public static int currentLineNumber = 1;
         public static string ReservedWordFile = "reservedWords.txt";
-        public static string OutputFile;
+        public static string OutputFile = "output.txt";
         public static string inputFile = "program.txt";
         public static Dictionary<string, Word> reservedWords = new Dictionary<string,Word>();
         public static Dictionary<string, Word> symbolTable = new Dictionary<string, Word>();
@@ -49,6 +50,8 @@ namespace Compilers_Project
         public const int realTokenType = 5;
         public const int longrealTokenType = 6;
         public const int idTokenType = 7;
+        public const int endOfStatementTokenType = 8;
+        public const int miscSymbolTokenType = 9;
         
         public static int lexErrTokenType = 99;
         public static string lengthTooLongAttributeNumber = "1";

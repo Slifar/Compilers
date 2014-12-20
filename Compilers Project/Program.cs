@@ -23,6 +23,7 @@ namespace Compilers_Project
             reservedWordReader.Initialize("ReservedWords.txt");
             reservedWordReader.readWords();
             initializeTokens();
+            Global_Vars.outputWriter.initialize();
 
             Machines.Addop_Machine addopMachine = new Machines.Addop_Machine();
             Machines.catchAll_Machine catchAllMachine = new Machines.catchAll_Machine();
@@ -35,12 +36,24 @@ namespace Compilers_Project
 
             string line;
 
-            while ((line = program.ReadLine()) != null)
+            while ((line = program.ReadLine()) != null && !Global_Vars.EOFReached)
             {
+                Global_Vars.currentLine = line.ToArray();
+                Global_Vars.outputWriter.writeLine();
                 Boolean charsRemain = true;
+                if (line.Length > 72)
+                {
+                    Global_Vars.outputWriter.writeError(Global_Vars.bufferTooLongError);
+                    charsRemain = false;
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = "";
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.bufferTooLongErrorAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
+                }
                 while (charsRemain)
                 {
-                    Global_Vars.currentLine = line.ToArray();
                     Boolean hasPassed = false;
                     hasPassed = whitespaceMachine.check();
                     if (!hasPassed) hasPassed = realMachine.Check();
@@ -52,6 +65,13 @@ namespace Compilers_Project
                     if (!hasPassed) hasPassed = catchAllMachine.Check();
                     if (Global_Vars.backPointer >= Global_Vars.currentLine.Length) charsRemain = false;
                     else if(!hasPassed){
+                        Global_Vars.outputWriter.writeError(Global_Vars.unknownSymbolError + "\"" + Global_Vars.currentLine[Global_Vars.backPointer] + "\"");
+                        Token token = new Token();
+                        token.lineNum = Global_Vars.currentLineNumber;
+                        token.lexeme = "" + Global_Vars.currentLine[Global_Vars.backPointer];
+                        token.tokenType = Global_Vars.lexErrTokenType;
+                        token.attribute = Global_Vars.unrecognizedSymbolAttributeNumber;
+                        Global_Vars.tokenQueue.Enqueue(token);
                         Global_Vars.backPointer++;
                         Global_Vars.frontPointer = Global_Vars.backPointer;
                     }

@@ -18,8 +18,11 @@ namespace Compilers_Project.Machines
             string currentString = "";
             while (true)
             {
-                if (Global_Vars.frontPointer >= Global_Vars.currentLine.Length) 
+                if (Global_Vars.frontPointer >= Global_Vars.currentLine.Length)
+                {
+                    if (state == 1) state = 2;
                     break;
+                }
 
                 char checking = Global_Vars.currentLine.ElementAt(Global_Vars.frontPointer);
                 if (char.IsLetterOrDigit(checking)) //|| checking == '.')

@@ -81,7 +81,7 @@ namespace Compilers_Project.Machines
                 Global_Vars.backPointer = Global_Vars.frontPointer;
                 if (preDecimalLength > Global_Vars.Max_Real_Front)
                 {
-                    Global_Vars.outputWriter.writeError(Global_Vars.preDecimalRealTooLongAttributeNumber);
+                    Global_Vars.outputWriter.writeError(Global_Vars.preDecimalRealTooLongError);
                     Token token = new Token();
                     token.lineNum = Global_Vars.currentLineNumber;
                     token.lexeme = currentString;
@@ -91,7 +91,7 @@ namespace Compilers_Project.Machines
                 }
                 else if (postDecimalLength > Global_Vars.Max_Real_Back)
                 {
-                    Global_Vars.outputWriter.writeError(Global_Vars.postDecimalRealTooLongAttributeNumber);
+                    Global_Vars.outputWriter.writeError(Global_Vars.postDecimalRealTooLongError);
                     Token token = new Token();
                     token.lineNum = Global_Vars.currentLineNumber;
                     token.lexeme = currentString;
@@ -111,7 +111,7 @@ namespace Compilers_Project.Machines
                 }
                 else if (currentString.Length > 1 && firstDigitZero)
                 {
-                    Global_Vars.outputWriter.writeError(Global_Vars.trailingZeroesErrorAttributeNumber);
+                    Global_Vars.outputWriter.writeError(Global_Vars.realTrailingZeroesError);
                     Token token = new Token();
                     token.lineNum = Global_Vars.currentLineNumber;
                     token.lexeme = currentString;
