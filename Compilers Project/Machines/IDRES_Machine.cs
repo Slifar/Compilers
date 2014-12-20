@@ -63,6 +63,27 @@ namespace Compilers_Project.Machines
         private void lookupID(string currentString)
         {
             throw new NotImplementedException();
+            if (Global_Vars.reservedWords.ContainsKey(currentString))
+            {
+                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, currentString);
+            }
+            else if (Global_Vars.symbolTable.ContainsKey(currentString))
+            {
+                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, currentString);
+            }
+            else
+            {
+                Word newSymbol = new Word();
+                newSymbol.word = currentString;
+                newSymbol.tokenType = "" + Global_Vars.idTokenType;
+                newSymbol.attribute = "Loc" + Global_Vars.nextSymbolLocation;
+                Global_Vars.symbolTable.Add(newSymbol.word, newSymbol);
+                Global_Vars.nextSymbolLocation++;
+                Global_Vars.tokenMinter.addToken(
+                    newSymbol.word, Global_Vars.idTokenType, newSymbol.attribute);
+                Global_Vars.tokenMinter.mintNewToken(
+                    Global_Vars.currentLineNumber, newSymbol.word);
+            }
         }
     }
 }

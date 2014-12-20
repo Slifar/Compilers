@@ -17,6 +17,15 @@ namespace Compilers_Project
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
 
+            File_Reader reservedWordReader = new File_Reader();
+            reservedWordReader.Initialize("ReservedWords.txt");
+            reservedWordReader.readWords();
+            initializeTokens();
+        }
+
+        private static void initializeTokens()
+        {
+            throw new NotImplementedException();
         }
     }
 }

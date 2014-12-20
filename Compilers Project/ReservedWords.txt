@@ -1,15 +1,15 @@
-﻿var
-array
-of
-integer
-real
-procedure
-begin
-end
-if
-then
-else
-while
-do
-not
-program
+﻿program 10 null
+var	11 null
+array 12 null
+of 13 null
+integer 14 null
+real 15 null
+procedure 16 null
+begin 17 null
+end	18 null
+if 19 null
+then 20 null
+else 21 null
+while 22 null
+do 23 null
+not 24 null
