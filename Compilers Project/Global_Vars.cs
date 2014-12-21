@@ -22,7 +22,8 @@ namespace Compilers_Project
         public static int currentLineNumber = 1;
         public static string ReservedWordFile = "reservedWords.txt";
         public static string OutputFile = "output.txt";
-        public static string inputFile = "program.txt";
+        public static string inputFile = "BadProgram.txt";
+        public static string tokenOutputFile = "tokenOutputs.txt";
         public static Dictionary<string, Word> reservedWords = new Dictionary<string,Word>();
         public static Dictionary<string, Word> symbolTable = new Dictionary<string, Word>();
         public static File_Writer outputWriter = new File_Writer();
@@ -37,6 +38,7 @@ namespace Compilers_Project
         public const string intLeadingZeroesError = "Lexical Error 6: Number has leading zeroes.";
         public const string realTrailingZeroesError = "Lexical Error 7: Number has trailing zeroes.";
         public const string bufferTooLongError = "Lexical Error 8: Line too long; Buffer overflowed.";
+        public const string realPowerTooLongError = "Lexical Error 9: longreal power too large.";
 
         public static string tokenOutput = "Line No, Lexeme, Token-Type, Attribute\n";
         public static Queue<Token> tokenQueue = new Queue<Token>();
@@ -52,6 +54,7 @@ namespace Compilers_Project
         public const int idTokenType = 7;
         public const int endOfStatementTokenType = 8;
         public const int miscSymbolTokenType = 9;
+        public const int EOFTokenType = 98;
         
         public static int lexErrTokenType = 99;
         public static string lengthTooLongAttributeNumber = "1";
@@ -62,6 +65,7 @@ namespace Compilers_Project
         public static string leadingZeroesErrorAttributeNumber = "6";
         public static string trailingZeroesErrorAttributeNumber = "7";
         public static string bufferTooLongErrorAttributeNumber = "8";
+        public static string realPowerTooLongErrorAttributeNumber = "9";
 
         #endregion
 

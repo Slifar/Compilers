@@ -5,8 +5,11 @@ begin
 	if b = 0 then gcd := a
 	else gcd := gcd(b, a mod b)
 end;
-12345678901
-1.1234567
-1.123
-0.123
+x := 2
+y := 75
+var z: longreal;
+z := 12.372E22
+var t, p: real
+t := 0.3123
+p := 1.2345
 .

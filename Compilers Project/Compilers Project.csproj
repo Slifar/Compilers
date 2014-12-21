@@ -59,6 +59,7 @@
     <Compile Include="Machines\catchAll_Machine.cs" />
     <Compile Include="Machines\IDRES_Machine.cs" />
     <Compile Include="Machines\Int_Machine.cs" />
+    <Compile Include="Machines\longReal_Machine.cs" />
     <Compile Include="Machines\Mulop_Machine.cs" />
     <Compile Include="Machines\Real_Machine.cs" />
     <Compile Include="Machines\Relop_Machine.cs" />
@@ -92,6 +93,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="ReservedWords.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="BadProgram.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

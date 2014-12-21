@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Compilers_Project.Machines
 {
-    class Real_Machine
+    class longReal_Machine
     {
         public bool Check()
         {
@@ -13,6 +13,8 @@ namespace Compilers_Project.Machines
             int entryState = 0;
             int preDecimalState = 1;
             int postDecimalState = 2;
+            int postEState = 3;
+            int postEDigitState = 4;
 
             bool firstDigitZero = false;
             bool lastDigitZero = false;
@@ -20,6 +22,7 @@ namespace Compilers_Project.Machines
             string currentString = "";
             int preDecimalLength = 0;
             int postDecimalLength = 0;
+            int postELength = 0;
 
             while (true)
             {
@@ -73,11 +76,39 @@ namespace Compilers_Project.Machines
                         postDecimalLength++;
                         Global_Vars.frontPointer++;
                     }
+                    else if (checking == 'E')
+                    {
+                        state = postEState;
+                        currentString += checking;
+                        Global_Vars.frontPointer++;
+                    }
+                    else break;
+                }
+                else if (state == postEState)
+                {
+                    if (char.IsDigit(checking))
+                    {
+                        postELength++;
+                        currentString += checking;
+                        Global_Vars.frontPointer++;
+                        state = postEDigitState;
+                    }
+                    else break;
+                }
+                else if (state == postEDigitState)
+                {
+                    if (char.IsDigit(checking))
+                    {
+                        postELength++;
+                        currentString += checking;
+                        Global_Vars.frontPointer++;
+                        state = postEDigitState;
+                    }
                     else break;
                 }
                 else break;
             }
-            if (state == postDecimalState)
+            if (state == postEDigitState)
             {
                 Global_Vars.backPointer = Global_Vars.frontPointer;
                 if (preDecimalLength > Global_Vars.Max_Real_Front)
@@ -88,6 +119,16 @@ namespace Compilers_Project.Machines
                     token.lexeme = currentString;
                     token.tokenType = Global_Vars.lexErrTokenType;
                     token.attribute = Global_Vars.preDecimalRealTooLongAttributeNumber;
+                    Global_Vars.tokenQueue.Enqueue(token);
+                }
+                else if (postELength > Global_Vars.Max_Real_Power)
+                {
+                    Global_Vars.outputWriter.writeError(Global_Vars.realPowerTooLongError);
+                    Token token = new Token();
+                    token.lineNum = Global_Vars.currentLineNumber;
+                    token.lexeme = currentString;
+                    token.tokenType = Global_Vars.lexErrTokenType;
+                    token.attribute = Global_Vars.realPowerTooLongErrorAttributeNumber;
                     Global_Vars.tokenQueue.Enqueue(token);
                 }
                 else if (postDecimalLength > Global_Vars.Max_Real_Back)
@@ -110,7 +151,7 @@ namespace Compilers_Project.Machines
                     token.attribute = Global_Vars.leadingZeroesErrorAttributeNumber;
                     Global_Vars.tokenQueue.Enqueue(token);
                 }
-                else if (currentString.Length > 1 && lastDigitZero)
+                else if (currentString.Length > 1 && firstDigitZero)
                 {
                     Global_Vars.outputWriter.writeError(Global_Vars.realTrailingZeroesError);
                     Token token = new Token();

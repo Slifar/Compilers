@@ -60,6 +60,9 @@ namespace Compilers_Project
             this.addToken("addop", Global_Vars.addopTokenType, "null");
             this.addToken("mulop", Global_Vars.mulopTokenType, "null");
             this.addToken("LEXERR", Global_Vars.lexErrTokenType, "null");
+            this.addToken("semicolon", Global_Vars.endOfStatementTokenType, "null");
+            this.addToken("symbol", Global_Vars.miscSymbolTokenType, "null");
+            this.addToken("EOF", Global_Vars.EOFTokenType, "null");
         }
         #endregion
     }

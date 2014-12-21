@@ -24,6 +24,7 @@ namespace Compilers_Project
             reservedWordReader.readWords();
             initializeTokens();
             Global_Vars.outputWriter.initialize();
+            Global_Vars.outputWriter.initializeTokenOutput(Global_Vars.tokenOutputFile);
 
             Machines.Addop_Machine addopMachine = new Machines.Addop_Machine();
             Machines.catchAll_Machine catchAllMachine = new Machines.catchAll_Machine();
@@ -33,6 +34,7 @@ namespace Compilers_Project
             Machines.Real_Machine realMachine = new Machines.Real_Machine();
             Machines.Relop_Machine relopMachine = new Machines.Relop_Machine();
             Machines.Whitespace_Machine whitespaceMachine = new Machines.Whitespace_Machine();
+            Machines.longReal_Machine longrealMachine = new Machines.longReal_Machine();
 
             string line;
 
@@ -56,6 +58,7 @@ namespace Compilers_Project
                 {
                     Boolean hasPassed = false;
                     hasPassed = whitespaceMachine.check();
+                    if (!hasPassed) hasPassed = longrealMachine.Check();
                     if (!hasPassed) hasPassed = realMachine.Check();
                     if (!hasPassed) hasPassed = intMachine.Check();
                     if (!hasPassed) hasPassed = addopMachine.Check();
@@ -83,6 +86,7 @@ namespace Compilers_Project
             foreach (var thing in Global_Vars.tokenQueue)
             {
                 Console.WriteLine(thing.writeToken());
+                Global_Vars.outputWriter.writeTokens(thing.writeToken());
             }
         }
 
