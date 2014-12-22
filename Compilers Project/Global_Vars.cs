@@ -22,7 +22,7 @@ namespace Compilers_Project
         public static int currentLineNumber = 1;
         public static string ReservedWordFile = "reservedWords.txt";
         public static string OutputFile = "output.txt";
-        public static string inputFile = "BadProgram.txt";
+        public static string inputFile = "program.txt";
         public static string tokenOutputFile = "tokenOutputs.txt";
         public static Dictionary<string, Word> reservedWords = new Dictionary<string,Word>();
         public static Dictionary<string, Word> symbolTable = new Dictionary<string, Word>();

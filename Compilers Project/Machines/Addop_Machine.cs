@@ -35,12 +35,12 @@ namespace Compilers_Project.Machines
 
             if (state == addState)
             {
-                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "mulop", "add");
+                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "addop", "add");
                 return true;
             }
             else if (state == subState)
             {
-                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "mulop", "subtract");
+                Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "addop", "subtract");
                 return true;
             }
             Global_Vars.frontPointer = Global_Vars.backPointer;
