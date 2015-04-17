@@ -88,6 +88,8 @@ namespace Compilers_Project
                 Console.WriteLine(thing.writeToken());
                 Global_Vars.outputWriter.writeTokens(thing.writeToken());
             }
+            RDParser.Parser parser = new RDParser.Parser();
+            parser.parse();
         }
 
         private static void initializeTokens()

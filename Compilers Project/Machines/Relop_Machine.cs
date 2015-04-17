@@ -17,6 +17,7 @@ namespace Compilers_Project.Machines
             int lessEquals = 4;
             int assign = 5;
             int equals = 6;
+            int notEqual = 7;
             
 
             while (true)
@@ -53,6 +54,12 @@ namespace Compilers_Project.Machines
                         if (checking == '=')
                         {
                             state = lessEquals;
+                            Global_Vars.frontPointer++;
+                            break;
+                        }
+                        else if (checking == '>')
+                        {
+                            state = notEqual;
                             Global_Vars.frontPointer++;
                             break;
                         }
@@ -121,13 +128,19 @@ namespace Compilers_Project.Machines
                 }
                 else if (state == assign)
                 {
-                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "assign");
+                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "assignop");
                     Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }
                 else if (state == equals)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "equals");
+                    Global_Vars.backPointer = Global_Vars.frontPointer;
+                    return true;
+                }
+                else if (state == notEqual)
+                {
+                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "relop", "not equal");
                     Global_Vars.backPointer = Global_Vars.frontPointer;
                     return true;
                 }

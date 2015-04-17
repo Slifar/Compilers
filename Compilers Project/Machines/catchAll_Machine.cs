@@ -17,6 +17,7 @@ namespace Compilers_Project.Machines
             int colonState = 5;
             int openParensState = 6;
             int closeParensState = 7;
+            int doubleDotState = 8;
             
             if (Global_Vars.frontPointer >= Global_Vars.currentLine.Length)
                 return false;
@@ -24,7 +25,15 @@ namespace Compilers_Project.Machines
 
             if (checking == '.')
             {
-                state = EOFState;
+                if (Global_Vars.frontPointer + 1 < Global_Vars.currentLine.Length)
+                {
+                    if (Global_Vars.currentLine.ElementAt(Global_Vars.frontPointer + 1) == '.')
+                    {
+                        state = doubleDotState;
+                        Global_Vars.frontPointer++;
+                    }
+                }
+                else state = EOFState;
             }
             else if (checking == ';')
             {
@@ -57,6 +66,10 @@ namespace Compilers_Project.Machines
                 else if (state == EOFState)
                 {
                     Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "EOF");
+                }
+                else if (state == doubleDotState)
+                {
+                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "symbol", "..");
                 }
                 else
                 {

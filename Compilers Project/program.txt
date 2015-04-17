@@ -1,6 +1,6 @@
-program example(input, output);
-var x, y: integer;
-function gcd(a, b: integer): integer;
+program example(input, output)
+var x: integer;
+procedure gcd(a, b: integer): integer;
 begin
 	if b = 0 then gcd := a
 	else gcd := gcd(b, a mod b)
@@ -12,4 +12,5 @@ z := 12.372E22
 var t, p: real
 t := 0.3123
 p := 1.2345
+q := x+y
 .

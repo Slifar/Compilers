@@ -13,3 +13,6 @@ else 21 null
 while 22 null
 do 23 null
 not 24 null
+and 25 null
+or 26 null
+call 27 null
