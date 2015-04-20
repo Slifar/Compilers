@@ -45,11 +45,20 @@ namespace Compilers_Project.RDParser
                         }
                         else if (next.tokenType == 9 && next.attribute.ToLower().Equals(")"))
                         {
-                            Wrapper program2 = parseProgram2();
-                            toReturn.children.Add(program2);
-                            if (program2.type.type == "ERR" || idList.type.type == "ERR*")
+                            next = tokenQueue.Dequeue();
+                            if (next.tokenType == 8)
                             {
-                                toReturn.type.type = "ERR";
+                                Wrapper program2 = parseProgram2();
+                                toReturn.children.Add(program2);
+                                if (program2.type.type == "ERR" || idList.type.type == "ERR*")
+                                {
+                                    toReturn.type.type = "ERR";
+                                }
+                            }
+                            else
+                            {
+                                reportParserError(";", next.lexeme, next.lineNum);
+                                toReturn.type.type = "ERR*";
                             }
                         }
                         else
@@ -274,7 +283,7 @@ namespace Compilers_Project.RDParser
         private Wrapper parseType()
         {
             Wrapper toReturn = new Wrapper();
-            toReturn.nonTerminal = "standard_type";
+            toReturn.nonTerminal = "type";
             toReturn.expected = "array, integer, or real";
             toReturn.follows.Add(";");
             toReturn.follows.Add(")");
@@ -1299,7 +1308,6 @@ namespace Compilers_Project.RDParser
                 if (next.tokenType == 25)//AND operation, requires boolean.
                 {
                     //TO BE ADDED
-                    tokenQueue.Dequeue();
                     Wrapper factor = parseFactor();
                     errorCheck(toReturn, factor);
                     Wrapper term2 = parseTerm2();
@@ -1307,7 +1315,6 @@ namespace Compilers_Project.RDParser
                 }
                 else //Numerical operation, requires numbers.
                 {
-                    tokenQueue.Dequeue();
                     Wrapper factor = parseFactor();
                     errorCheck(toReturn, factor);
                     Wrapper term2 = parseTerm2();
@@ -1458,6 +1465,29 @@ namespace Compilers_Project.RDParser
 
         private void errorRecov(Wrapper erroredWrapper)
         {
+            if (tokenQueue.Count < 1)
+            {
+                Console.WriteLine("Ran out of tokens while trying to recover from error.");
+                return;
+            }
+            Token next = tokenQueue.Peek();
+            Boolean foundFollows = false;
+            while (!foundFollows)
+            {
+                if (tokenQueue.Count < 1)
+                {
+                    Console.WriteLine("Ran out of tokens while trying to recover from error.");
+                    return;
+                }
+                if (erroredWrapper.follows.Contains(next.lexeme) || erroredWrapper.follows.Contains(next.attribute))
+                {
+                    foundFollows = true;
+                }
+                else
+                {
+                    tokenQueue.Dequeue();
+                }
+            }
         }
     }
 }

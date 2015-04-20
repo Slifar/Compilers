@@ -76,7 +76,7 @@ namespace Compilers_Project.Machines
                         postDecimalLength++;
                         Global_Vars.frontPointer++;
                     }
-                    else if (checking == 'E')
+                    else if (checking == 'E'||checking == 'e')
                     {
                         state = postEState;
                         currentString += checking;

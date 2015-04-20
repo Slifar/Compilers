@@ -18,6 +18,8 @@ namespace Compilers_Project.Machines
             int openParensState = 6;
             int closeParensState = 7;
             int doubleDotState = 8;
+            int openBracketState = 9;
+            int closedBracketState = 10;
             
             if (Global_Vars.frontPointer >= Global_Vars.currentLine.Length)
                 return false;
@@ -55,13 +57,21 @@ namespace Compilers_Project.Machines
             {
                 state = closeParensState;
             }
+            else if (checking == '[')
+            {
+                state = openBracketState;
+            }
+            else if (checking == ']')
+            {
+                state = closedBracketState;
+            }
             if (state != 0)
             {
                 Global_Vars.frontPointer++;
                 Global_Vars.backPointer = Global_Vars.frontPointer;
                 if (state == semicolonState)
                 {
-                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, "semicolon");
+                    Global_Vars.tokenMinter.mintNewToken(Global_Vars.currentLineNumber, ";");
                 }
                 else if (state == EOFState)
                 {
