@@ -273,16 +273,573 @@ namespace Compilers_Project.RDParser
 
         private Wrapper parseType()
         {
-            throw new NotImplementedException();
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "standard_type";
+            toReturn.expected = "array, integer, or real";
+            toReturn.follows.Add(";");
+            toReturn.follows.Add(")");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 14 || next.tokenType == 15)
+            {
+                toReturn.productionNum = "4.1";
+                Wrapper standardType = parseStandardType();
+                errorCheck(toReturn, standardType);
+            }
+            else if (next.tokenType == 12)
+            {
+                toReturn.productionNum = "4.2";
+                tokenQueue.Dequeue();
+                next = tokenQueue.Peek();
+                if (next.tokenType == 9 && next.attribute == "[")
+                {
+                    tokenQueue.Dequeue();
+                    next = tokenQueue.Peek();
+                    if (next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)
+                    {
+                        tokenQueue.Dequeue();
+                        next = tokenQueue.Peek();
+                        if (next.tokenType == 9 && next.attribute == "..")
+                        {
+                            tokenQueue.Dequeue();
+                            next = tokenQueue.Peek();
+                            if (next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)
+                            {
+                                tokenQueue.Dequeue();
+                                next = tokenQueue.Peek();
+                                if (next.tokenType == 9 && next.attribute == "]")
+                                {
+                                    tokenQueue.Dequeue();
+                                    next = tokenQueue.Peek();
+                                    if (next.tokenType == 13)
+                                    {
+                                        tokenQueue.Dequeue();
+                                        Wrapper standardType = parseStandardType();
+                                        errorCheck(toReturn, standardType);
+                                    }
+                                    else
+                                    {
+                                        reportParserError("a number", next.lexeme, next.lineNum);
+                                        toReturn.type.type = "ERR*";
+                                        errorRecov(toReturn);
+                                    }
+                                }
+                                else
+                                {
+                                    reportParserError("]", next.lexeme, next.lineNum);
+                                    toReturn.type.type = "ERR*";
+                                    errorRecov(toReturn);
+                                }
+                            }
+                            else
+                            {
+                                reportParserError("a number", next.lexeme, next.lineNum);
+                                toReturn.type.type = "ERR*";
+                                errorRecov(toReturn);
+                            }
+                        }
+                        else
+                        {
+                            reportParserError("..", next.lexeme, next.lineNum);
+                            toReturn.type.type = "ERR*";
+                            errorRecov(toReturn);
+                        }
+                    }
+                    else
+                    {
+                        reportParserError("a number", next.lexeme, next.lineNum);
+                        toReturn.type.type = "ERR*";
+                        errorRecov(toReturn);
+                    }
+                }
+                else
+                {
+                    reportParserError("[", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
         }
-        private Wrapper parseCompoundStatement()
+
+        private Wrapper parseStandardType()
         {
-            throw new NotImplementedException();
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "standard_type";
+            toReturn.expected = "integer or real";
+            toReturn.follows.Add(";");
+            toReturn.follows.Add(")");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 14)
+            {
+                toReturn.productionNum = "5.1";
+                toReturn.type.type = "integer";
+                tokenQueue.Dequeue();
+            }
+            else if (next.tokenType == 15)
+            {
+                toReturn.productionNum = "5.2";
+                toReturn.type.type = "real";
+                tokenQueue.Dequeue();
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
         }
 
         private Wrapper parseSubprogramDecarations()
         {
-            throw new NotImplementedException();
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_declarations";
+            toReturn.expected = "procedure";
+            toReturn.follows.Add("begin");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 16)
+            {
+                toReturn.productionNum = "6.1";
+                Wrapper subprogramDeclaration = parseSubprogramDeclaration();
+                errorCheck(toReturn, subprogramDeclaration);
+                next = tokenQueue.Peek();
+                if (next.tokenType == 8)
+                {
+                    tokenQueue.Dequeue();
+                    Wrapper subprogramDeclarations = parseSubprogramDecarations();
+                    errorCheck(toReturn, subprogramDeclarations);
+                }
+                else
+                {
+                    reportParserError(";", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else toReturn.productionNum = "6.2";
+            return toReturn;
+        }
+
+        private Wrapper parseSubprogramDeclaration()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_declaration";
+            toReturn.expected = "procedure";
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 16)
+            {
+                toReturn.productionNum = "7.1";
+                Wrapper subprogramHead = parseSubprogramHead();
+                errorCheck(toReturn, subprogramHead);
+                Wrapper subprogramDeclaration2 = parseSubprogramDeclaration2();
+                errorCheck(toReturn, subprogramDeclaration2);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseSubprogramDeclaration2()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_declaration'";
+            toReturn.expected = "var, procedure, or begin";
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 11)
+            {
+                toReturn.productionNum = "7.2";
+                Wrapper declarations = parseDeclarations();
+                errorCheck(toReturn, declarations);
+                Wrapper subprogramDeclaration3 = parseSubprogramDeclaration3();
+                errorCheck(toReturn, subprogramDeclaration3);
+            }
+            else if (next.tokenType == 16)
+            {
+                toReturn.productionNum = "7.3";
+                Wrapper subprogramDeclarations = parseSubprogramDecarations();
+                errorCheck(toReturn, subprogramDeclarations);
+                Wrapper compoundStatement = parseCompoundStatement();
+                errorCheck(toReturn, compoundStatement);
+            }
+            else if (next.tokenType == 17)
+            {
+                toReturn.productionNum = "7.4";
+                Wrapper compoundStatement = parseCompoundStatement();
+                errorCheck(toReturn, compoundStatement);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+
+            return toReturn;
+        }
+
+        private Wrapper parseSubprogramDeclaration3()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_declaration''";
+            toReturn.expected = "procedure or begin";
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 16)
+            {
+                toReturn.productionNum = "7.5";
+                Wrapper declarations = parseSubprogramDecarations();
+                errorCheck(toReturn, declarations);
+                Wrapper compoundStatement = parseCompoundStatement();
+                errorCheck(toReturn, compoundStatement);
+            }
+            else if (next.tokenType == 17)
+            {
+                toReturn.productionNum = "7.6";
+                Wrapper compoundStatement = parseCompoundStatement();
+                errorCheck(toReturn, compoundStatement);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseSubprogramHead()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_head";
+            toReturn.expected = "procedure";
+            toReturn.follows.Add("var");
+            toReturn.follows.Add("procedure");
+            toReturn.follows.Add("begin");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 16)
+            {
+                toReturn.productionNum = "8.1";
+                tokenQueue.Dequeue();
+                next = tokenQueue.Peek();
+                if (next.tokenType == 7)
+                {
+                    tokenQueue.Dequeue();
+                    Wrapper subprogramHead2 = parseSubprogramHead2();
+                    errorCheck(toReturn, subprogramHead2);
+                }
+                else
+                {
+                    reportParserError("an id", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+
+            return toReturn;
+        }
+
+        private Wrapper parseSubprogramHead2()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "subprogram_head'";
+            toReturn.expected = ": or (";
+            toReturn.follows.Add("var");
+            toReturn.follows.Add("procedure");
+            toReturn.follows.Add("begin");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 9 && next.attribute == "(")
+            {
+                toReturn.productionNum = "8.2";
+                Wrapper arguments = parseArguments();
+                errorCheck(toReturn, arguments);
+                next = tokenQueue.Peek();
+                if (next.tokenType == 8)
+                {
+                    tokenQueue.Dequeue();
+                }
+                else
+                {
+                    reportParserError(";", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else if (next.tokenType == 8)
+            {
+                toReturn.productionNum = "8.3";
+                tokenQueue.Dequeue();
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseArguments()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "parameter_list";
+            toReturn.expected = "(";
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 9 && next.attribute == "(")
+            {
+                toReturn.productionNum = "9.1";
+                tokenQueue.Dequeue();
+                Wrapper paremeterList = parseParameterList();
+                errorCheck(toReturn, paremeterList);
+                next = tokenQueue.Peek();
+                if (next.tokenType == 9 && next.attribute == ")")
+                {
+                    tokenQueue.Dequeue();
+                }
+                else
+                {
+                    reportParserError(")", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+
+            return toReturn;
+        }
+
+        private Wrapper parseParameterList()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "parameter_list";
+            toReturn.expected = "an id";
+            toReturn.follows.Add(")");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 7)
+            {
+                toReturn.productionNum = "10.1";
+                tokenQueue.Dequeue();
+                next = tokenQueue.Peek();
+                if (next.tokenType == 9 && next.attribute == ":")
+                {
+                    tokenQueue.Dequeue();
+                    Wrapper type = parseType();
+                    errorCheck(toReturn, type);
+                    Wrapper parameterList2 = parseParameterList2();
+                    errorCheck(toReturn, parameterList2);
+                }
+                else
+                {
+                    reportParserError(":", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseParameterList2()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "parameter_list'";
+            toReturn.expected = ";";
+            toReturn.follows.Add(")");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 8)
+            {
+                toReturn.productionNum = "10.2";
+                tokenQueue.Dequeue();
+                next = tokenQueue.Peek();
+                if (next.tokenType == 7)
+                {
+                    tokenQueue.Dequeue();
+                    next = tokenQueue.Peek();
+                    if (next.tokenType == 9 && next.attribute == ":")
+                    {
+                        tokenQueue.Dequeue();
+                        Wrapper type = parseType();
+                        errorCheck(toReturn, type);
+                        Wrapper parameterList2 = parseParameterList2();
+                        errorCheck(toReturn, parameterList2);
+                    }
+                    else
+                    {
+                        reportParserError(":", next.lexeme, next.lineNum);
+                        toReturn.type.type = "ERR*";
+                        errorRecov(toReturn);
+                    }
+                }
+                else
+                {
+                    reportParserError("an id", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else toReturn.productionNum = "10.3";
+            return toReturn;
+        }
+
+        private Wrapper parseCompoundStatement()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "compound_statement";
+            toReturn.expected = "begin";
+            toReturn.follows.Add("end");
+            toReturn.follows.Add(".");
+            toReturn.follows.Add("else");
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 17)
+            {
+                toReturn.productionNum = "11.1";
+                tokenQueue.Dequeue();
+                Wrapper compoundStatement2 = parseCompoundStatement2();
+                errorCheck(toReturn, compoundStatement2);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseCompoundStatement2()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "compound_statement'";
+            toReturn.expected = "end, begin, while, if, an id, or call";
+            toReturn.follows.Add("end");
+            toReturn.follows.Add(".");
+            toReturn.follows.Add("else");
+            toReturn.follows.Add(";");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 17 || next.tokenType == 22 || next.tokenType == 19 || next.tokenType == 7 || next.tokenType == 27)
+            {
+                toReturn.productionNum = "11.2";
+                Wrapper optionalStatements = parseOptionalStatements();
+                errorCheck(toReturn, optionalStatements);
+                next = tokenQueue.Peek();
+                if (next.tokenType == 18)
+                {
+                    tokenQueue.Dequeue();
+                }
+                else
+                {
+                    reportParserError("end", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
+            }
+            else if (next.tokenType == 18)
+            {
+                toReturn.productionNum = "11.3";
+                tokenQueue.Dequeue();
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseOptionalStatements()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "optional_statements";
+            toReturn.expected = "begin, while, if, an id, or call";
+            toReturn.follows.Add("end");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 17 || next.tokenType == 22 || next.tokenType == 19 || next.tokenType == 7 || next.tokenType == 27)
+            {
+                toReturn.productionNum = "12.1";
+                Wrapper statementList = parseStatementList();
+                errorCheck(toReturn, statementList);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseStatementList()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "statement_list";
+            toReturn.expected = "begin, while, if, an id, or call";
+            toReturn.follows.Add("end");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 17 || next.tokenType == 22 || next.tokenType == 19 || next.tokenType == 7 || next.tokenType == 27)
+            {
+                toReturn.productionNum = "13.1";
+                Wrapper statement = parseStatement();
+                errorCheck(toReturn, statement);
+                Wrapper statementList2 = parseStatementList2();
+                errorCheck(toReturn, statementList2);
+            }
+            else
+            {
+                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                toReturn.type.type = "ERR*";
+                errorRecov(toReturn);
+            }
+            return toReturn;
+        }
+
+        private Wrapper parseStatementList2()
+        {
+            Wrapper toReturn = new Wrapper();
+            toReturn.nonTerminal = "statement_list'";
+            toReturn.expected = ";";
+            toReturn.follows.Add("end");
+            Token next = tokenQueue.Peek();
+            if (next.tokenType == 8)
+            {
+                toReturn.productionNum = "13.2";
+                tokenQueue.Dequeue();
+                Wrapper statement = parseStatement();
+                errorCheck(toReturn, statement);
+                Wrapper statementList2 = parseStatementList2();
+                errorCheck(toReturn, statementList2);
+            }
+            else toReturn.productionNum = "13.3";
+            return toReturn;
         }
 
         private Wrapper parseStatement()
@@ -707,7 +1264,7 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 7 || next.tokenType == 24 || // If the next token is an ID or NOT
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)//if the next ID is a number
             {
-                toReturn.productionNum = "20.1"
+                toReturn.productionNum = "20.1";
                 Wrapper factor = parseFactor();
                 errorCheck(toReturn, factor);
                 Wrapper term2 = parseTerm2();
@@ -863,7 +1420,7 @@ namespace Compilers_Project.RDParser
                     }
                 }
             }
-
+            return toReturn;
         }
 
         private Wrapper parseSign()

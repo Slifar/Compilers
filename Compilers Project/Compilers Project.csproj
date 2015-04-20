@@ -101,6 +101,9 @@
     <Content Include="BadProgram.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="perfectProgram.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="RDParser\Production_Wrappers\" />
