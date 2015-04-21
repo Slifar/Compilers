@@ -8,6 +8,8 @@ namespace Compilers_Project.RDParser
     class Parser
     {
         Queue<Token> tokenQueue = Global_Vars.tokenQueue;
+        int offset = 0;
+        Stack<greenNode> greenNodeStack = new Stack<greenNode>();
         public void parse()
         {
            // Queue<Token> tokenQueue = Global_Vars.tokenQueue;
@@ -33,6 +35,7 @@ namespace Compilers_Project.RDParser
                 next = tokenQueue.Dequeue();
                 if (next.tokenType == 7)
                 {
+                    addGreenNode(next.lexeme, "PROGNAME");
                     next = tokenQueue.Dequeue();
                     if (next.tokenType == 9 && next.attribute.ToLower().Equals("("))
                     {
@@ -161,6 +164,7 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 7)
             {
                 tokenQueue.Dequeue();
+                addBlueNode(next.lexeme, "PGPARAM");
                 Wrapper identifierList2 = parseIdentifierList2();
                 errorCheck(toReturn, identifierList2);
             }
@@ -188,7 +192,8 @@ namespace Compilers_Project.RDParser
                     tokenQueue.Dequeue();
                     if (tokenQueue.Peek().tokenType == 7)
                     {
-                        tokenQueue.Dequeue();
+                        next = tokenQueue.Dequeue();
+                        addBlueNode(next.lexeme, "PGPARAM");
                         Wrapper identifierList2 = parseIdentifierList2();
                         errorCheck(toReturn, identifierList2);
                     }
@@ -232,6 +237,7 @@ namespace Compilers_Project.RDParser
                 next = tokenQueue.Peek();
                 if (next.tokenType == 7)
                 {
+                    string id = next.lexeme;
                     tokenQueue.Dequeue();
                     next = tokenQueue.Peek();
                     if (next.tokenType == 9 && next.attribute == ":")
@@ -239,6 +245,7 @@ namespace Compilers_Project.RDParser
                         tokenQueue.Dequeue();
                         Wrapper type = parseType();
                         errorCheck(toReturn, type);
+                        addBlueNode(id, type.type.type);
                         next = tokenQueue.Peek();
                         if (next.tokenType == 8)
                         {
@@ -293,6 +300,11 @@ namespace Compilers_Project.RDParser
                 toReturn.productionNum = "4.1";
                 Wrapper standardType = parseStandardType();
                 errorCheck(toReturn, standardType);
+                if (toReturn.type.type != "ERR")
+                {
+                    toReturn.type.type = standardType.type.type;
+                    toReturn.type.size = standardType.type.size;
+                }
             }
             else if (next.tokenType == 12)
             {
@@ -303,15 +315,17 @@ namespace Compilers_Project.RDParser
                 {
                     tokenQueue.Dequeue();
                     next = tokenQueue.Peek();
-                    if (next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)
+                    if (next.tokenType == Global_Vars.intTokenType)
                     {
                         tokenQueue.Dequeue();
+                        string temp = next.lexeme;
+                        int firstNum = Convert.ToInt32(temp);
                         next = tokenQueue.Peek();
                         if (next.tokenType == 9 && next.attribute == "..")
                         {
                             tokenQueue.Dequeue();
                             next = tokenQueue.Peek();
-                            if (next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)
+                            if (next.tokenType == Global_Vars.intTokenType)
                             {
                                 tokenQueue.Dequeue();
                                 next = tokenQueue.Peek();
@@ -1488,6 +1502,15 @@ namespace Compilers_Project.RDParser
                     tokenQueue.Dequeue();
                 }
             }
+        }
+        private bool addGreenNode(string id, string type)
+        {
+            return true;
+        }
+
+        private bool addBlueNode(string id, string type)
+        {
+            return true;
         }
     }
 }
