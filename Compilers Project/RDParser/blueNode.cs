@@ -7,7 +7,7 @@ namespace Compilers_Project.RDParser
 {
     class blueNode
     {
-        Type type = new Type();
-        string id = "";
+        public Type type = new Type();
+        public string id = "";
     }
 }
