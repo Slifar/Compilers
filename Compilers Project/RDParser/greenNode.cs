@@ -11,7 +11,7 @@ namespace Compilers_Project.RDParser
         public List<blueNode> parameters = new List<blueNode>();
         public greenNode parent = null;
         public List<greenNode> children = new List<greenNode>();
-
+        public Type type = new Type();
         public string id = "";
     }
 }

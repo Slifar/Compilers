@@ -12,7 +12,10 @@ namespace Compilers_Project.RDParser
         string currentId = "";
         int currentParam = 0;
         Stack<greenNode> greenNodeStack = new Stack<greenNode>();
+        blueNode currentBlueNode = null;
+        greenNode currentGreenNode = null;
         Type leftType = null;
+        bool doubleCheck = false;
 
         public void parse()
         {
@@ -987,7 +990,7 @@ namespace Compilers_Project.RDParser
                 toReturn.productionNum = "14.5";
                 tokenQueue.Dequeue();
                 Wrapper expression = parseExpression();
-                if (expression.type.type != "BOOL")
+                if (expression.type.type != "BOOL" && expression.type.type != "ERR" && expression.type.type != "ERR*")
                 {
                     toReturn.type.type = "ERR*";
                     Console.WriteLine("Line " + next.lineNum + ": Conditional Expression Error");
@@ -1083,12 +1086,22 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 7)
             {
                 currentId = next.lexeme;
+                blueNode node = getBlueNode(currentId);
                 toReturn.productionNum = "15.1";
                 tokenQueue.Dequeue();
                 Wrapper variable2 = parseVariable2();
                 errorCheck(toReturn, variable2);
                 currentId = "";
                 toReturn.type.type = variable2.type.type;
+                if (node == null)
+                {
+                    Console.WriteLine(next.lineNum);
+                    toReturn.type.type = "ERR*";
+                }
+                if (toReturn.type.type == "null")
+                {
+                    toReturn.type.type = node.type.type;
+                }
             }
             else
             {
@@ -1119,6 +1132,7 @@ namespace Compilers_Project.RDParser
                     blueNode node = getBlueNode(currentId);
                     if (node == null)
                     {
+                        Console.WriteLine(next.lineNum);
                         toReturn.type.type = "ERR*";
                     }
                     else if (expression.type.type == "INT")
@@ -1153,7 +1167,10 @@ namespace Compilers_Project.RDParser
                     errorRecov(toReturn);
                 }
             }
-            else toReturn.productionNum = "15.3";
+            else
+            {
+                toReturn.productionNum = "15.3";
+            }
             return toReturn;
         }
 
@@ -1238,17 +1255,21 @@ namespace Compilers_Project.RDParser
                 (next.tokenType == 3 && (next.lexeme == "add" || next.lexeme == "subtract")))
             {
                 toReturn.productionNum = "17.1";
-                greenNode node = getGreenNode(currentId);
+                string hold = currentId;
+                greenNode node = getGreenNode(hold);
                 Wrapper expression = parseExpression();
+                currentId = hold;
                 errorCheck(toReturn, expression);
                 if (node == null)
                 {
                     toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
                 }
                 else if (currentParam + 1 > node.parameters.Count)
                 {
                     toReturn.type.type = "ERR*";
                     Console.WriteLine("Line " + next.lineNum + ": Too many parameters given for the procedure");
+                    errorRecov(toReturn);
                 }
                 else
                 {
@@ -1272,6 +1293,8 @@ namespace Compilers_Project.RDParser
             return toReturn;
         }
 
+        
+
         private Wrapper parseExpressionList2()
         {
             Wrapper toReturn = new Wrapper();
@@ -1283,6 +1306,7 @@ namespace Compilers_Project.RDParser
             {
                 toReturn.productionNum = "17.2";
                 greenNode node = getGreenNode(currentId);
+                string idHold = currentId;
                 tokenQueue.Dequeue();
                 Wrapper expression = parseExpression();
                 errorCheck(toReturn, expression);
@@ -1303,6 +1327,7 @@ namespace Compilers_Project.RDParser
                         toReturn.type.type = "ERR*";
                     }
                     currentParam++;
+                    currentId = idHold;
                     Wrapper expressionList2 = parseExpressionList2();
                     errorCheck(toReturn, expressionList2);
                 }
@@ -1356,6 +1381,7 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add(";");
             toReturn.follows.Add("end");
             Token next = tokenQueue.Peek();
+            Type typeHold = leftType;
             if (next.tokenType == Global_Vars.relopTokenType)
             {
                 tokenQueue.Dequeue();
@@ -1365,13 +1391,13 @@ namespace Compilers_Project.RDParser
                 if (toReturn.type.type == "ERR")
                 {
                 }
-                else if (leftType.type == simpleExpression.type.type)
+                else if (typeHold.type == simpleExpression.type.type)
                 {
-                    if (leftType.type == "INT" || leftType.type == "REAL")
+                    if (typeHold.type == "INT" || typeHold.type == "REAL")
                     {
                         toReturn.type.type = "BOOL";
                     }
-                    
+
                     else
                     {
                         Console.WriteLine("Line " + next.lineNum + ": Parameter Type Mismatch");
@@ -1384,7 +1410,11 @@ namespace Compilers_Project.RDParser
                     toReturn.type.type = "ERR*";
                 }
             }
-            else toReturn.productionNum = "18.3"; //epsilon production
+            else
+            {
+                toReturn.productionNum = "18.3"; //epsilon production
+                toReturn.type.type = typeHold.type;
+            }
             return toReturn;
         }
         private Wrapper parseSimpleExpression()
@@ -1403,9 +1433,12 @@ namespace Compilers_Project.RDParser
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)//if the next ID is a number
             {
                 Wrapper term = parseTerm();
+                leftType = term.type;
                 errorCheck(toReturn, term);
                 Wrapper simpleExpression2 = parseSimpleExpression2();
                 errorCheck(toReturn, simpleExpression2);
+                if(simpleExpression2.type.type == "null") toReturn.type = term.type;
+                else toReturn.type = simpleExpression2.type;
             }
             else if (next.tokenType == 3 && (next.lexeme == "add" || next.lexeme == "subtract"))//19.2
             {
@@ -1413,8 +1446,19 @@ namespace Compilers_Project.RDParser
                 errorCheck(toReturn, sign);
                 Wrapper term = parseTerm();
                 errorCheck(toReturn, term);
-                Wrapper simpleExpression2 = parseSimpleExpression2();
-                errorCheck(toReturn, simpleExpression2);
+                leftType = term.type;
+                if (term.type.type == "INT" || term.type.type == "REAL")
+                {
+                    Wrapper simpleExpression2 = parseSimpleExpression2();
+                    errorCheck(toReturn, simpleExpression2);
+                    if(simpleExpression2.type.type == "null") toReturn.type = term.type;
+                    else toReturn.type = simpleExpression2.type;
+                }
+                else
+                {
+                    toReturn.type.type = "ERR*";
+                    Console.WriteLine("Error on line: " + next.lineNum + ", sign must be use with an int or real");
+                }
             }
             else
             {
@@ -1422,6 +1466,7 @@ namespace Compilers_Project.RDParser
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
+            leftType = null;
             return toReturn;
         }
 
@@ -1437,24 +1482,73 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("end");
             toReturn.follows.Add("relop");
             Token next = tokenQueue.Peek();
-            if (next.tokenType == Global_Vars.addopTokenType || next.tokenType == 26)//19.3
+            if (next.tokenType == Global_Vars.addopTokenType)//19.3
             {
                 toReturn.productionNum = "19.3";
-                if (next.tokenType == 26)//OR operation, boolean operation
+                //if (next.tokenType == 26)//OR operation, boolean operation
+                //{
+                //    tokenQueue.Dequeue();
+                //    Wrapper term = parseTerm();
+                //    errorCheck(toReturn, term);
+                //    Wrapper simpleExpression = parseSimpleExpression2();
+                //    errorCheck(toReturn, simpleExpression);
+                //}
+                if (next.tokenType == Global_Vars.addopTokenType)
                 {
-                    tokenQueue.Dequeue();
-                    Wrapper term = parseTerm();
-                    errorCheck(toReturn, term);
-                    Wrapper simpleExpression = parseSimpleExpression2();
-                    errorCheck(toReturn, simpleExpression);
-                }
-                else if (next.tokenType == Global_Vars.addopTokenType)//numerical addop operation
-                {
-                    tokenQueue.Dequeue();
-                    Wrapper term = parseTerm();
-                    errorCheck(toReturn, term);
-                    Wrapper simpleExpression = parseSimpleExpression2();
-                    errorCheck(toReturn, simpleExpression);
+                    if (next.lexeme == "or")
+                    {
+                        tokenQueue.Dequeue();
+                        Type holdType = leftType;
+                        Wrapper term = parseTerm();
+                        errorCheck(toReturn, term);
+                        if (term.type.type != holdType.type)
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation");
+                        }
+                        else if (term.type.type != "BOOL")
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted boolean operation with non-boolean value");
+                        }
+                        else
+                        {
+                            leftType = term.type;
+                            Wrapper simpleExpression = parseSimpleExpression2();
+                            errorCheck(toReturn, simpleExpression);
+                            toReturn.type = simpleExpression.type;
+                            leftType = null;
+                        }
+                    }
+                    else
+                    {
+                        tokenQueue.Dequeue();
+                        Type holdType = leftType;
+                        Wrapper term = parseTerm();
+                        errorCheck(toReturn, term);
+                        if (term.type.type != holdType.type)
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation");
+                        }
+                        else if (term.type.type == "BOOL")
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted non-boolean operation with boolean value");
+                        }
+                        else
+                        {
+                            leftType = term.type;
+                            Wrapper simpleExpression = parseSimpleExpression2();
+                            errorCheck(toReturn, simpleExpression);
+                            toReturn.type = simpleExpression.type;
+                            leftType = null;
+                        }
+                    }
                 }
             }
             else toReturn.productionNum = "19.4";
@@ -1478,10 +1572,14 @@ namespace Compilers_Project.RDParser
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)//if the next ID is a number
             {
                 toReturn.productionNum = "20.1";
+                currentId = next.lexeme;
                 Wrapper factor = parseFactor();
                 errorCheck(toReturn, factor);
+                leftType = factor.type;
                 Wrapper term2 = parseTerm2();
                 errorCheck(toReturn, term2);
+                toReturn.type = term2.type;
+                if (toReturn.type.type == "null") toReturn.type = factor.type; // term2 was epsilon, set type = to factor
             }
             else
             {
@@ -1505,27 +1603,81 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("end");
             toReturn.follows.Add("relop");
             Token next = tokenQueue.Peek();
-            if (next.tokenType == Global_Vars.mulopTokenType || next.tokenType == 25)// 20.2
+            if (next.tokenType == Global_Vars.mulopTokenType)// 20.2
             {
                 tokenQueue.Dequeue();
                 toReturn.productionNum = "20.2";
-                if (next.tokenType == 25)//AND operation, requires boolean.
+                //if (next.tokenType == 25)//AND operation, requires boolean.
+                //{
+                //    //TO BE ADDED
+                //    Wrapper factor = parseFactor();
+                //    errorCheck(toReturn, factor);
+                //    Wrapper term2 = parseTerm2();
+                //    errorCheck(toReturn, term2);
+                //}
+                if (true)//Numerical operation, requires numbers.
                 {
-                    //TO BE ADDED
-                    Wrapper factor = parseFactor();
-                    errorCheck(toReturn, factor);
-                    Wrapper term2 = parseTerm2();
-                    errorCheck(toReturn, term2);
-                }
-                else //Numerical operation, requires numbers.
-                {
-                    Wrapper factor = parseFactor();
-                    errorCheck(toReturn, factor);
-                    Wrapper term2 = parseTerm2();
-                    errorCheck(toReturn, term2);
+                    Type holdType = leftType;
+                    if (next.lexeme == "and")
+                    {
+                        Wrapper factor = parseFactor();
+                        errorCheck(toReturn, factor);
+                        if (factor.type.type != holdType.type)
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation");
+                        }
+                        else if (factor.type.type != "BOOL")
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted boolean operation with non-boolean value");
+                        }
+                        else
+                        {
+                            leftType = factor.type;
+                            Wrapper term2 = parseTerm2();
+                            errorCheck(toReturn, term2);
+                        }
+                    }
+                    else
+                    {
+                        Wrapper factor = parseFactor();
+                        errorCheck(toReturn, factor);
+                        if (factor.type.type != holdType.type)
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation");
+                        }
+                        else if (factor.type.type == "BOOL")
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted non-boolean operation with boolean value");
+                        }
+                        else if (next.lexeme == "mod" && holdType.type != "INT")
+                        {
+                            toReturn.type.type = "ERR*";
+                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": Types do not match operation");
+                        }
+                        else
+                        {
+                            leftType = factor.type;
+                            Wrapper term2 = parseTerm2();
+                            errorCheck(toReturn, term2);
+                        }
+                    }
                 }
             }
-            else toReturn.productionNum = "20.3";
+            else
+            {
+                toReturn.productionNum = "20.3";
+                toReturn.type = leftType;
+            }
+            leftType = null;
             return toReturn;
         }
 
@@ -1538,6 +1690,9 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("addop");
             toReturn.follows.Add("]");
             toReturn.follows.Add(",");
+            toReturn.follows.Add("do");
+            toReturn.follows.Add("then");
+            toReturn.follows.Add(")");
             toReturn.follows.Add("else");
             toReturn.follows.Add(";");
             toReturn.follows.Add("end");
@@ -1547,17 +1702,33 @@ namespace Compilers_Project.RDParser
             {
                 toReturn.productionNum = "21.1";
                 tokenQueue.Dequeue();
+                doubleCheck = true;
+                currentBlueNode = getBlueNode(next.lexeme);
+                if(currentBlueNode == null){
+                    currentGreenNode = getGreenNode(next.lexeme);
+                    if (currentGreenNode == null)
+                    {
+                        Console.WriteLine(next.lineNum);
+                        toReturn.type.type = "ERR*";
+                        errorRecov(toReturn);
+                        doubleCheck = false;
+                        return toReturn;
+                    }
+                }
+                else leftType = currentBlueNode.type;
+                doubleCheck = false;
                 Wrapper factor2 = parseFactor2();
                 errorCheck(toReturn, factor2);
+                toReturn.type = factor2.type;
             }
             else if (next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)
             //21.2
             {
                 tokenQueue.Dequeue();
                 toReturn.productionNum = "21.2";
-                if (next.tokenType == Global_Vars.intTokenType) toReturn.type.type = "int";
-                else if (next.tokenType == Global_Vars.realTokenType) toReturn.type.type = "real";
-                else if (next.tokenType == Global_Vars.longrealTokenType) toReturn.type.type = "longreal";
+                if (next.tokenType == Global_Vars.intTokenType) toReturn.type.type = "INT";
+                else if (next.tokenType == Global_Vars.realTokenType) toReturn.type.type = "REAL";
+                else if (next.tokenType == Global_Vars.longrealTokenType) toReturn.type.type = "REAL";
             }
             else if (next.tokenType == 24)//21.3
             {
@@ -1565,6 +1736,35 @@ namespace Compilers_Project.RDParser
                 tokenQueue.Dequeue();
                 Wrapper factor = parseFactor();
                 errorCheck(toReturn, factor);
+                if (factor.type.type == "BOOL")
+                {
+                    toReturn.type = factor.type;
+                }
+                else
+                {
+                    if (toReturn.type.type != "ERR")
+                    {
+                        Console.WriteLine("Line " + next.lineNum + ", lexeme " + next.lexeme + ": attempting NOT operation with non-boolean value.");
+                        toReturn.type.type = "ERR*";
+                    }
+                }
+            }
+            else if (next.tokenType == 9 && next.attribute == "(")
+            {
+                tokenQueue.Dequeue();
+                Wrapper expression = parseExpression();
+                next = tokenQueue.Peek();
+                if (next.tokenType == 9 && next.attribute == ")")
+                {
+                    toReturn.type = expression.type;
+                    tokenQueue.Dequeue();
+                }
+                else
+                {
+                    reportParserError(")", next.lexeme, next.lineNum);
+                    toReturn.type.type = "ERR*";
+                    errorRecov(toReturn);
+                }
             }
             else
             {
@@ -1584,6 +1784,9 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("addop");
             toReturn.follows.Add("]");
             toReturn.follows.Add(",");
+            toReturn.follows.Add("do");
+            toReturn.follows.Add("then");
+            toReturn.follows.Add(")");
             toReturn.follows.Add("else");
             toReturn.follows.Add(";");
             toReturn.follows.Add("end");
@@ -1591,16 +1794,25 @@ namespace Compilers_Project.RDParser
             Token next = tokenQueue.Peek();
             if (next.tokenType == 9)
             {
-                if (next.attribute == "(")// 21.4
+                if (next.attribute == "(")// 21.5
                 {
-                    toReturn.productionNum = "21.4";
+                    toReturn.productionNum = "21.5";
+                    if (currentGreenNode == null)
+                    {
+                        toReturn.type.type = "ERR*";
+                        Console.WriteLine("Error on line " + next.lineNum + ": Identifier is not a procedure.");
+                        errorRecov(toReturn);
+                        return toReturn;
+                    }
                     tokenQueue.Dequeue();
+                    currentParam = 0;
                     Wrapper expressionList = parseExpressionList();
                     errorCheck(toReturn, expressionList);
                     next = tokenQueue.Peek();
                     if (next.tokenType == 9 && next.attribute == ")")
                     {
                         tokenQueue.Dequeue();
+                        toReturn.type.type = "PROC";
                         //Correct state, do nothing
                     }
                     else
@@ -1611,16 +1823,33 @@ namespace Compilers_Project.RDParser
                     }
 
                 }
-                else if (next.attribute == "[")//21.5
+                else if (next.attribute == "[")//21.6
                 {
+                    if (currentBlueNode == null || (currentBlueNode.type.type != "AREAL" && currentBlueNode.type.type != "AINT"))
+                    {
+                        toReturn.type.type = "ERR*";
+                        Console.WriteLine("Error on line " + next.lineNum + ": Identifier is not an array.");
+                        errorRecov(toReturn);
+                        return toReturn;
+                    }
                     toReturn.productionNum = "21.5";
                     tokenQueue.Dequeue();
+                    blueNode blueHold = currentBlueNode;
                     Wrapper expression = parseExpression();
                     errorCheck(toReturn, expression);
+                    if (expression.type.type != "INT")
+                    {
+                        toReturn.type.type = "ERR*";
+                        Console.WriteLine("Error on line " + next.lineNum + ": Array indicies must be integers.");
+                        errorRecov(toReturn);
+                        return toReturn;
+                    }
                     next = tokenQueue.Peek();
                     if (next.tokenType == 9 && next.attribute == "]")
                     {
                         tokenQueue.Dequeue();
+                        if (blueHold.type.type == "AINT") toReturn.type.type = "INT";
+                        else if (blueHold.type.type == "AREAL") toReturn.type.type = "REAL";
                         //Correct state, do nothing
                     }
                     else
@@ -1630,6 +1859,14 @@ namespace Compilers_Project.RDParser
                         errorRecov(toReturn);
                     }
                 }
+                else
+                {
+                    toReturn.type.type = currentBlueNode.type.type;
+                }
+            }
+            else
+            {
+                toReturn.type.type = currentBlueNode.type.type;
             }
             return toReturn;
         }
@@ -1674,10 +1911,11 @@ namespace Compilers_Project.RDParser
                 Console.WriteLine("Ran out of tokens while trying to recover from error.");
                 return;
             }
-            Token next = tokenQueue.Peek();
+            
             Boolean foundFollows = false;
             while (!foundFollows)
             {
+                Token next = tokenQueue.Peek();
                 if (tokenQueue.Count < 1)
                 {
                     Console.WriteLine("Ran out of tokens while trying to recover from error.");
@@ -1695,17 +1933,184 @@ namespace Compilers_Project.RDParser
         }
         private bool addGreenNode(string id, string type)
         {
+            greenNode newNode = new greenNode();
+            newNode.id = id;
+            newNode.type.type = type;
+            if (greenNodeStack.Count < 1)
+            {
+                greenNodeStack.Push(newNode);
+                return true;
+            }
+            greenNode currentTop = greenNodeStack.Peek();
+            foreach (greenNode cur in currentTop.children)
+            {
+                if (cur.id == id)
+                {
+                    Console.Write("Error: ID already exists in this scope.");
+                    return false;
+                }
+            }
+            if (currentTop.id == id)
+            {
+                Console.Write("Error: ID already exists in this scope.");
+                return false;
+            }
+            newNode.parent = greenNodeStack.Peek();
+            greenNodeStack.Push(newNode);
             return true;
         }
 
         private bool addBlueNode(string id, string type)
         {
+            blueNode newNode = new blueNode();
+            newNode.type.type = type;
+            newNode.id = id;
+            greenNode top = greenNodeStack.Peek();
+            foreach (blueNode var in top.vars)
+            {
+                if (var.id == id)
+                {
+                    Console.Write("Error: ID already exists in this scope.");
+                    return false;
+                }
+            }
+            foreach (blueNode param in top.parameters)
+            {
+                if (param.id == id)
+                {
+                    Console.Write("Error: ID already exists in this scope.");
+                    return false;
+                }
+            }
+            if (type == "PPINT" || type == "PPREAL" || type == "PPAINT" || type == "PPAREAL")
+            {
+                string newType = "";
+                if (type == "PPINT") newType = "INT";
+                else if (type == "PPREAL") newType = "REAL";
+                else if (type == "PPAINT") newType = "AINT";
+                else if (type == "PPAREAL") newType = "AREAL";
+                else
+                {
+                    Console.WriteLine("Error parsing parameter types.");
+                }
+                newNode.type.type = newType;
+                top.parameters.Add(newNode);
+                //memAlloc(newNode);
+                return true;
+            }
+            //memAlloc(newNode);
+            top.vars.Add(newNode);
             return true;
+        }
+
+        private void memAlloc(blueNode newNode)
+        {
+            throw new NotImplementedException();
         }
 
         private blueNode getBlueNode(string currentId)
         {
-            throw new NotImplementedException();
+            greenNode top = greenNodeStack.Peek();
+            blueNode toReturn = null;
+            foreach (blueNode var in top.vars)
+            {
+                if (var.id == currentId)
+                {
+                    toReturn = var;
+                }
+            }
+            if (toReturn == null)
+            {
+                foreach (blueNode var in top.parameters)
+                {
+                    if (var.id == currentId)
+                    {
+                        toReturn = var;
+                        return toReturn;
+                    }
+                }
+            }
+            if (top.parent != null)
+            {
+                toReturn = blueParentSearch(currentId, top);
+            }
+            if (toReturn == null && !doubleCheck)
+            {
+                Console.WriteLine("Error: variable not found in current scope");
+            }
+            return toReturn;
+        }
+
+        private blueNode blueParentSearch(string currentId, greenNode input)
+        {
+            greenNode checking = input.parent;
+            blueNode toReturn = null;
+            foreach (blueNode var in checking.vars)
+            {
+                if (var.id == currentId)
+                {
+                    toReturn = var;
+                }
+            }
+            if (checking.parent != null && toReturn == null)
+            {
+                toReturn = blueParentSearch(currentId, checking);
+            }
+            return toReturn;
+        }
+
+        private greenNode getGreenNode(string currentId)
+        {
+            greenNode top = greenNodeStack.Peek();
+            greenNode toReturn = null;
+            if (top.id == currentId)
+            {
+                toReturn = top;
+                return toReturn;
+            }
+            foreach (greenNode var in top.children)
+            {
+                if (var.id == currentId)
+                {
+                    toReturn = var;
+                }
+            }
+            if (top.parent != null && toReturn == null)
+            {
+                toReturn = greenParentSearch(currentId, top);
+            }
+            if (toReturn == null && !doubleCheck)
+            {
+                Console.WriteLine("Error: procedure not found in current scope");
+            }
+            else if (toReturn == null && doubleCheck)
+            {
+                Console.WriteLine("Error: procedure/var not found in current scope");
+            }
+            return toReturn;
+        }
+
+        private greenNode greenParentSearch(string currentId, greenNode input)
+        {
+            greenNode checking = input.parent;
+            greenNode toReturn = null;
+            if (checking.id == currentId)
+            {
+                toReturn = checking;
+                return toReturn;
+            }
+            foreach (greenNode var in checking.children)
+            {
+                if (var.id == currentId)
+                {
+                    toReturn = var;
+                }
+            }
+            if (checking.parent != null && toReturn == null)
+            {
+                toReturn = greenParentSearch(currentId, checking);
+            }
+            return toReturn;
         }
     }
 }

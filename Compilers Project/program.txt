@@ -2,11 +2,10 @@ program example(input, output);
 var x: integer;
 procedure gcd(a: integer; b: integer);
 begin
-	if b = 0 then gcd := a
-	else gcd := gcd(b, a mod b)
+	if b = 0 then x := 2
+	else x := 75
 end;
 begin
-x := 2;
-y := 75
+x := 2
 end
 .

@@ -15,6 +15,8 @@ namespace Compilers_Project
         public static int Max_Real_Front = 5;
         public static int Max_Real_Back = 5;
         public static int Max_Real_Power = 2;
+        public static int Integer_Size = 4;
+        public static int Real_Size = 8;
 
         public static int nextSymbolLocation = 0;
         public static bool EOFReached = false;
