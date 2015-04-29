@@ -77,7 +77,7 @@ namespace Compilers_Project.Machines
                 }
                 else break;
             }
-            if (state == postDecimalState)
+            if (state == postDecimalState && postDecimalLength > 0)
             {
                 Global_Vars.backPointer = Global_Vars.frontPointer;
                 if (preDecimalLength > Global_Vars.Max_Real_Front)
@@ -120,6 +120,11 @@ namespace Compilers_Project.Machines
                     token.attribute = Global_Vars.trailingZeroesErrorAttributeNumber;
                     Global_Vars.tokenQueue.Enqueue(token);
                 }
+                else if (postDecimalLength < 1)
+                {
+                    Global_Vars.frontPointer = Global_Vars.backPointer;
+                    return false;
+                }
                 else
                 {
                     Token token = new Token();
@@ -129,6 +134,7 @@ namespace Compilers_Project.Machines
                     token.attribute = "null";
                     Global_Vars.tokenQueue.Enqueue(token);
                 }
+                
                 return true;
             }
             else

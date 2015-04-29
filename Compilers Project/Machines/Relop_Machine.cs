@@ -40,8 +40,9 @@ namespace Compilers_Project.Machines
                         }
                         else
                         {
-                            Global_Vars.frontPointer--;
+                            //Global_Vars.frontPointer--;
                             state = greaterThan;
+                            break;
                         }
 
                     }
@@ -65,8 +66,9 @@ namespace Compilers_Project.Machines
                         }
                         else
                         {
-                            Global_Vars.frontPointer--;
+                            //Global_Vars.frontPointer--;
                             state = lessThan;
+                            break;
                         }
                     }
                     #endregion

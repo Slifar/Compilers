@@ -497,12 +497,14 @@ namespace Compilers_Project.RDParser
                 errorCheck(toReturn, subprogramHead);
                 Wrapper subprogramDeclaration2 = parseSubprogramDeclaration2();
                 errorCheck(toReturn, subprogramDeclaration2);
+                greenNodeStack.Pop();
             }
             else
             {
                 reportParserError(toReturn.expected, next.lexeme, next.lineNum);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
+                greenNodeStack.Pop();
             }
             return toReturn;
         }
@@ -1123,13 +1125,14 @@ namespace Compilers_Project.RDParser
             {
                 toReturn.productionNum = "15.2";
                 tokenQueue.Dequeue();
+                string idHold = currentId;
                 Wrapper expression = parseExpression();
                 errorCheck(toReturn, expression);
                 next = tokenQueue.Peek();
                 if (next.tokenType == 9 && next.attribute == "]")
                 {
                     tokenQueue.Dequeue();
-                    blueNode node = getBlueNode(currentId);
+                    blueNode node = getBlueNode(idHold);
                     if (node == null)
                     {
                         Console.WriteLine(next.lineNum);
@@ -1349,6 +1352,7 @@ namespace Compilers_Project.RDParser
             Token next = tokenQueue.Peek();
             if (next.tokenType == 7 || next.tokenType == 24 || //18.1
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType ||
+                (next.tokenType == 9 && next.attribute == "(") ||
                 (next.tokenType == 3 && (next.lexeme == "add" || next.lexeme == "subtract")))
             {
                 toReturn.productionNum = "18.1";
@@ -1430,6 +1434,7 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("relop");
             Token next = tokenQueue.Peek();
             if (next.tokenType == 7 || next.tokenType == 24 || //19.1
+                (next.tokenType == 9 && next.attribute == "(") || 
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)//if the next ID is a number
             {
                 Wrapper term = parseTerm();
@@ -1569,6 +1574,7 @@ namespace Compilers_Project.RDParser
             toReturn.follows.Add("relop");
             Token next = tokenQueue.Peek();
             if (next.tokenType == 7 || next.tokenType == 24 || // If the next token is an ID or NOT
+                (next.tokenType == 9 && next.attribute == "(") || 
                 next.tokenType == Global_Vars.intTokenType || next.tokenType == Global_Vars.realTokenType || next.tokenType == Global_Vars.longrealTokenType)//if the next ID is a number
             {
                 toReturn.productionNum = "20.1";
@@ -1956,6 +1962,7 @@ namespace Compilers_Project.RDParser
                 return false;
             }
             newNode.parent = greenNodeStack.Peek();
+            newNode.parent.children.Add(newNode);
             greenNodeStack.Push(newNode);
             return true;
         }
@@ -2030,7 +2037,7 @@ namespace Compilers_Project.RDParser
                     }
                 }
             }
-            if (top.parent != null)
+            if (top.parent != null && toReturn == null)
             {
                 toReturn = blueParentSearch(currentId, top);
             }
@@ -2081,11 +2088,11 @@ namespace Compilers_Project.RDParser
             }
             if (toReturn == null && !doubleCheck)
             {
-                Console.WriteLine("Error: procedure not found in current scope");
+                Console.WriteLine("Error: procedure not found in current scope. Looking for: " + currentId);
             }
             else if (toReturn == null && doubleCheck)
             {
-                Console.WriteLine("Error: procedure/var not found in current scope");
+                Console.WriteLine("Error: procedure/var not found in current scope. Looking for: " + currentId);
             }
             return toReturn;
         }
