@@ -26,9 +26,11 @@ namespace Compilers_Project
         public static string OutputFile = "output.txt";
         public static string inputFile = "cor3";
         public static string tokenOutputFile = "tokenOutputs.txt";
+        public static string memOutputFile = "memoryOutputs.txt";
         public static Dictionary<string, Word> reservedWords = new Dictionary<string,Word>();
         public static Dictionary<string, Word> symbolTable = new Dictionary<string, Word>();
         public static File_Writer outputWriter = new File_Writer();
+        public static File_Writer memWriter = new File_Writer();
         public static char[] currentLine;
         public static tokenMint tokenMinter = new tokenMint();
 

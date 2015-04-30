@@ -11,5 +11,12 @@ namespace Compilers_Project.RDParser
         public string id = "";
         public int leftIndex = 0;
         public int rightIndex = 0;
+        public int memLoc;
+
+        public string makeString()
+        {
+            string toReturn = "var id: " + this.id + "; type: " + this.type.type + "; location: " + this.memLoc + ".";
+            return toReturn;
+        }
     }
 }

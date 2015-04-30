@@ -11,6 +11,8 @@ namespace Compilers_Project.RDParser
         int offset = 0;
         string currentId = "";
         int currentParam = 0;
+        int firstArrayIndex = 0;
+        int secondArrayIndex = 0;
         Stack<greenNode> greenNodeStack = new Stack<greenNode>();
         blueNode currentBlueNode = null;
         greenNode currentGreenNode = null;
@@ -65,6 +67,7 @@ namespace Compilers_Project.RDParser
                                 {
                                     toReturn.type.type = "ERR";
                                 }
+                                outputMemories();
                             }
                             else
                             {
@@ -160,7 +163,6 @@ namespace Compilers_Project.RDParser
             }
             return toReturn;
         }
-
 
         private Wrapper parseIdentifierList()
         {
@@ -365,10 +367,14 @@ namespace Compilers_Project.RDParser
                                         {
                                             if (standardType.type.type == "REAL")
                                             {
+                                                firstArrayIndex = firstNum;
+                                                secondArrayIndex = secondNum;
                                                 toReturn.type.type = "AREAL";
                                             }
                                             else if (standardType.type.type == "INT")
                                             {
+                                                firstArrayIndex = firstNum;
+                                                secondArrayIndex = secondNum;
                                                 toReturn.type.type = "AINT";
                                             }
                                         }
@@ -1964,6 +1970,7 @@ namespace Compilers_Project.RDParser
             newNode.parent = greenNodeStack.Peek();
             newNode.parent.children.Add(newNode);
             greenNodeStack.Push(newNode);
+            offset = 0;
             return true;
         }
 
@@ -2002,17 +2009,48 @@ namespace Compilers_Project.RDParser
                 }
                 newNode.type.type = newType;
                 top.parameters.Add(newNode);
-                //memAlloc(newNode);
+                memAlloc(newNode);
                 return true;
             }
-            //memAlloc(newNode);
+            memAlloc(newNode);
             top.vars.Add(newNode);
             return true;
         }
 
         private void memAlloc(blueNode newNode)
         {
-            throw new NotImplementedException();
+            if (newNode.type.type == "INT")
+            {
+                newNode.type.size = Global_Vars.Integer_Size;
+                newNode.memLoc = offset;
+                offset += newNode.type.size;
+            }
+            else if (newNode.type.type == "REAL")
+            {
+                newNode.type.size = Global_Vars.Real_Size;
+                newNode.memLoc = offset;
+                offset += newNode.type.size;
+            }
+            else if (newNode.type.type == "AREAL")
+            {
+                int multiplier = secondArrayIndex - firstArrayIndex + 1;
+                int totalMemoryNeeded = multiplier * Global_Vars.Real_Size;
+                newNode.type.size = totalMemoryNeeded;
+                newNode.memLoc = offset;
+                offset += totalMemoryNeeded;
+            }
+            else if (newNode.type.type == "AINT")
+            {
+                int multiplier = secondArrayIndex - firstArrayIndex + 1;
+                int totalMemoryNeeded = multiplier * Global_Vars.Integer_Size;
+                newNode.type.size = totalMemoryNeeded;
+                newNode.memLoc = offset;
+                offset += totalMemoryNeeded;
+            }
+            /*else if (newNode.type.type != "PGPARAM") 
+            {
+                Console.Out.WriteLine("Internal error calculating memory");
+            }*/
         }
 
         private blueNode getBlueNode(string currentId)
@@ -2118,6 +2156,44 @@ namespace Compilers_Project.RDParser
                 toReturn = greenParentSearch(currentId, checking);
             }
             return toReturn;
+        }
+
+        private void outputMemories()
+        {
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(Global_Vars.memOutputFile))
+            {
+                greenNode program = greenNodeStack.Pop();
+                file.WriteLine(program.id);
+                foreach (blueNode var in program.parameters)
+                {
+                    file.WriteLine("\t" + var.makeString());
+                }
+                foreach (blueNode var in program.vars)
+                {
+                    file.WriteLine("\t" + var.makeString());
+                }
+                foreach (greenNode child in program.children)
+                {
+                    outputMemoryChain(child, file);
+                }
+            }
+        }
+
+        private void outputMemoryChain(greenNode node, System.IO.StreamWriter file)
+        {
+            file.WriteLine(node.id);
+            foreach (blueNode var in node.parameters)
+            {
+                file.WriteLine("\t" + var.makeString());
+            }
+            foreach (blueNode var in node.vars)
+            {
+                file.WriteLine("\t" + var.makeString());
+            }
+            foreach (greenNode child in node.children)
+            {
+                outputMemoryChain(child, file);
+            }
         }
     }
 }
