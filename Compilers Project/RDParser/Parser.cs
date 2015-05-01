@@ -9,6 +9,7 @@ namespace Compilers_Project.RDParser
     {
         Queue<Token> tokenQueue = Global_Vars.tokenQueue;
         int offset = 0;
+        int currLine = 1;
         string currentId = "";
         int currentParam = 0;
         int firstArrayIndex = 0;
@@ -18,6 +19,7 @@ namespace Compilers_Project.RDParser
         greenNode currentGreenNode = null;
         Type leftType = null;
         bool doubleCheck = false;
+        System.IO.StreamWriter output = new System.IO.StreamWriter("ErrorOutputs.txt");
 
         public void parse()
         {
@@ -27,11 +29,77 @@ namespace Compilers_Project.RDParser
             
         }
 
-        public void reportParserError(string expected, string actual, int line)
+        public void reportParserError(string expected, Token next)
         {
-            Console.WriteLine("Error on line " + line + ": Expected " + expected + ", got: " + actual + ".");
+            string output = "";
+            if (next.tokenType == 99)
+            {
+                if (next.attribute == "1")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": Length too long.";
+                }
+                else if (next.attribute == "2")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": Unrecognize symbol "+ next.lexeme + ".";
+                }
+                else if (next.attribute == "3")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": integer too long.";
+                }
+                else if (next.attribute == "4")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": too many digits before the decimal";
+                }
+                else if (next.attribute == "5")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": too many digits after the decimal";
+                }
+                else if (next.attribute == "6")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": leaing zeroes error";
+                }
+                else if (next.attribute == "7")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": trailing zeroes error";
+                }
+                else if (next.attribute == "8")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": line too long error";
+                }
+                else if (next.attribute == "9")
+                {
+                    output = "Lexical error on line " + next.lineNum + ": real power too long error";
+                }
+            }
+            else
+            {
+                output = "Syntax Error on line " + next.lineNum + ": Expected " + expected + ", got: " + next.lexeme + ".";
+                
+            }
+            if (next.lineNum != currLine)
+            {
+                currLine = next.lineNum;
+                //fileWrite(Global_Vars.lines.ElementAt(currLine - 1));
+            }
+            Console.WriteLine(output);
+            fileWrite(output);
         }
 
+        public void fileWrite(String toWrite)
+        {
+            //output.WriteLine(toWrite);
+            //output.Flush();
+            Global_Vars.lines[currLine-1] += System.Environment.NewLine + toWrite;
+        }
+
+        public void finalWrite()
+        {
+            foreach (string str in Global_Vars.lines)
+            {
+               output.WriteLine(str);
+               output.Flush();
+            }
+        }
         public Wrapper parseProgram()
         {
             Wrapper toReturn = new Wrapper();
@@ -71,33 +139,34 @@ namespace Compilers_Project.RDParser
                             }
                             else
                             {
-                                reportParserError(";", next.lexeme, next.lineNum);
+                                reportParserError(";", next);
                                 toReturn.type.type = "ERR*";
                             }
                         }
                         else
                         {
-                            reportParserError(")", next.lexeme, next.lineNum);
+                            reportParserError(")", next);
                             toReturn.type.type = "ERR*";
                         }
                     }
                     else
                     {
-                        reportParserError("(", next.lexeme, next.lineNum);
+                        reportParserError("(", next);
                         toReturn.type.type = "ERR*";
                     }
                 }
                 else
                 {
-                    reportParserError("an id", next.lexeme, next.lineNum);
+                    reportParserError("an id", next);
                     toReturn.type.type = "ERR*";
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
             }
+            finalWrite();
             return toReturn;
         }
 
@@ -126,7 +195,7 @@ namespace Compilers_Project.RDParser
                 next = tokenQueue.Dequeue();
                 if (next.tokenType != 98)
                 {
-                    reportParserError(".", next.lexeme, next.lineNum);
+                    reportParserError(".", next);
                 }
             }
             else if (next.tokenType == 11)// Production 1.2
@@ -153,12 +222,12 @@ namespace Compilers_Project.RDParser
                 next = tokenQueue.Dequeue();
                 if (next.tokenType != 98)
                 {
-                    reportParserError(".", next.lexeme, next.lineNum);
+                    reportParserError(".", next);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
             }
             return toReturn;
@@ -174,8 +243,15 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 7)
             {
                 tokenQueue.Dequeue();
+                if (currLine != next.lineNum)
+                {
+                    currLine = next.lineNum;
+                }
                 if (!addBlueNode(next.lexeme, "PGPARAM"))
                 {
+                    string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     toReturn.type.type = "ERR*";
                 }
                 Wrapper identifierList2 = parseIdentifierList2();
@@ -183,7 +259,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -206,8 +282,15 @@ namespace Compilers_Project.RDParser
                     if (tokenQueue.Peek().tokenType == 7)
                     {
                         next = tokenQueue.Dequeue();
+                        if (currLine != next.lineNum)
+                        {
+                            currLine = next.lineNum;
+                        }
                         if (!addBlueNode(next.lexeme, "PGPARAM"))
                         {
+                            string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                             toReturn.type.type = "ERR*";
                         }
                         Wrapper identifierList2 = parseIdentifierList2();
@@ -215,7 +298,7 @@ namespace Compilers_Project.RDParser
                     }
                     else
                     {
-                        reportParserError("an id", next.lexeme, next.lineNum);
+                        reportParserError("an id", next);
                         toReturn.type.type = "ERR*";
                     }
                 }
@@ -226,14 +309,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                    reportParserError(toReturn.expected, next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -261,8 +344,15 @@ namespace Compilers_Project.RDParser
                         tokenQueue.Dequeue();
                         Wrapper type = parseType();
                         errorCheck(toReturn, type);
+                        if (currLine != next.lineNum)
+                        {
+                            currLine = next.lineNum;
+                        }
                         if (!addBlueNode(id, type.type.type))
                         {
+                            string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + id + ".";
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                             toReturn.type.type = "ERR*";
                         }
                         next = tokenQueue.Peek();
@@ -274,21 +364,21 @@ namespace Compilers_Project.RDParser
                         }
                         else
                         {
-                            reportParserError(";", next.lexeme, next.lineNum);
+                            reportParserError(";", next);
                             toReturn.type.type = "ERR*";
                             errorRecov(toReturn);
                         }
                     }
                     else
                     {
-                        reportParserError(":", next.lexeme, next.lineNum);
+                        reportParserError(":", next);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                     }
                 }
                 else
                 {
-                    reportParserError("an id", next.lexeme, next.lineNum);
+                    reportParserError("an id", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -299,7 +389,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -360,7 +450,13 @@ namespace Compilers_Project.RDParser
                                         if (firstNum >= secondNum)
                                         {
                                             toReturn.type.type = "ERR*";
-                                            Console.WriteLine("error on line: " + next.lineNum + ", improper array indicies");
+                                            String toWrite = "Semantic error on line: " + next.lineNum + ", improper array indicies";
+                                            Console.WriteLine(toWrite);
+                                            if (next.lineNum != currLine)
+                                            {
+                                                currLine = next.lineNum;
+                                            }
+                                            fileWrite(toWrite);
                                         }
                                         errorCheck(toReturn, standardType);
                                         if (toReturn.type.type != "ERR" || toReturn.type.type != "ERR")
@@ -381,49 +477,49 @@ namespace Compilers_Project.RDParser
                                     }
                                     else
                                     {
-                                        reportParserError("an int", next.lexeme, next.lineNum);
+                                        reportParserError("an int", next);
                                         toReturn.type.type = "ERR*";
                                         errorRecov(toReturn);
                                     }
                                 }
                                 else
                                 {
-                                    reportParserError("]", next.lexeme, next.lineNum);
+                                    reportParserError("]", next);
                                     toReturn.type.type = "ERR*";
                                     errorRecov(toReturn);
                                 }
                             }
                             else
                             {
-                                reportParserError("an int", next.lexeme, next.lineNum);
+                                reportParserError("an int", next);
                                 toReturn.type.type = "ERR*";
                                 errorRecov(toReturn);
                             }
                         }
                         else
                         {
-                            reportParserError("..", next.lexeme, next.lineNum);
+                            reportParserError("..", next);
                             toReturn.type.type = "ERR*";
                             errorRecov(toReturn);
                         }
                     }
                     else
                     {
-                        reportParserError("a number", next.lexeme, next.lineNum);
+                        reportParserError("a number", next);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                     }
                 }
                 else
                 {
-                    reportParserError("[", next.lexeme, next.lineNum);
+                    reportParserError("[", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -452,7 +548,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -480,7 +576,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(";", next.lexeme, next.lineNum);
+                    reportParserError(";", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -507,7 +603,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
                 greenNodeStack.Pop();
@@ -546,7 +642,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -577,7 +673,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -602,8 +698,15 @@ namespace Compilers_Project.RDParser
                 {
                     string id = next.lexeme;
                     tokenQueue.Dequeue();
+                    if (currLine != next.lineNum)
+                    {
+                        currLine = next.lineNum;
+                    }
                     if (!addGreenNode(id, "PROCNAME"))
                     {
+                        string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         toReturn.type.type = "ERR*";
                     }
                     Wrapper subprogramHead2 = parseSubprogramHead2();
@@ -611,14 +714,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError("an id", next.lexeme, next.lineNum);
+                    reportParserError("an id", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -647,7 +750,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(";", next.lexeme, next.lineNum);
+                    reportParserError(";", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -659,7 +762,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -686,14 +789,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(")", next.lexeme, next.lineNum);
+                    reportParserError(")", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -744,14 +847,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(":", next.lexeme, next.lineNum);
+                    reportParserError(":", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -805,14 +908,14 @@ namespace Compilers_Project.RDParser
                     }
                     else
                     {
-                        reportParserError(":", next.lexeme, next.lineNum);
+                        reportParserError(":", next);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                     }
                 }
                 else
                 {
-                    reportParserError("an id", next.lexeme, next.lineNum);
+                    reportParserError("an id", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -840,7 +943,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -869,7 +972,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError("end", next.lexeme, next.lineNum);
+                    reportParserError("end", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -881,7 +984,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -903,7 +1006,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -927,7 +1030,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -974,10 +1077,16 @@ namespace Compilers_Project.RDParser
                 toReturn.productionNum = "14.4";
                 tokenQueue.Dequeue();
                 Wrapper expression = parseExpression();
-                if (expression.type.type != "BOOL")
+                if (expression.type.type != "BOOL" && (expression.type.type != "ERR" || expression.type.type != "ERR*"))
                 {
                     toReturn.type.type = "ERR*";
-                    Console.WriteLine("Line " + next.lineNum + ": Conditional Expression Error");
+                    string toWrite = " Semantic error on Line " + next.lineNum + ": Conditional Expression Error";
+                    Console.WriteLine(toWrite);
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
                 }
                 next = tokenQueue.Peek();
                 if (next.tokenType == 23)
@@ -988,7 +1097,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError("do", next.lexeme, next.lineNum);
+                    reportParserError("do", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -1001,7 +1110,13 @@ namespace Compilers_Project.RDParser
                 if (expression.type.type != "BOOL" && expression.type.type != "ERR" && expression.type.type != "ERR*")
                 {
                     toReturn.type.type = "ERR*";
-                    Console.WriteLine("Line " + next.lineNum + ": Conditional Expression Error");
+                    string toWrite = " Semantic error on Line " + next.lineNum + ": Conditional Expression Error";
+                    Console.WriteLine(toWrite);
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
                 }
                 errorCheck(toReturn, expression);
                 next = tokenQueue.Peek();
@@ -1015,7 +1130,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError("then", next.lexeme, next.lineNum);
+                    reportParserError("then", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -1031,15 +1146,22 @@ namespace Compilers_Project.RDParser
                     tokenQueue.Dequeue();
                     Wrapper expression = parseExpression();
                     errorCheck(toReturn, expression);
-                    if (variable.type.type != "ERR" && variable.type.type != "ERR*" && variable.type.type != expression.type.type)
+                    if (variable.type.type != "ERR" && variable.type.type != "ERR*" && variable.type.type != expression.type.type && 
+                        expression.type.type != "ERR" && expression.type.type != "ERR*")
                     {
-                        Console.WriteLine("Line " + next.lineNum + ": Operand Type Mismatch");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Operand Type Mismatch";
+                        Console.WriteLine(toWrite);
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
                         toReturn.type.type = "ERR*";
                     }
                 }
                 else
                 {
-                    reportParserError("assignop", next.lexeme, next.lineNum);
+                    reportParserError("assignop", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -1052,7 +1174,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1094,7 +1216,18 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 7)
             {
                 currentId = next.lexeme;
+                if (next.lineNum != currLine)
+                {
+                    currLine = next.lineNum;
+                }
                 blueNode node = getBlueNode(currentId);
+                if (node == null)
+                {
+                    string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+                    toReturn.type.type = "ERR*";
+                }
                 toReturn.productionNum = "15.1";
                 tokenQueue.Dequeue();
                 Wrapper variable2 = parseVariable2();
@@ -1113,7 +1246,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1138,10 +1271,16 @@ namespace Compilers_Project.RDParser
                 if (next.tokenType == 9 && next.attribute == "]")
                 {
                     tokenQueue.Dequeue();
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
                     blueNode node = getBlueNode(idHold);
                     if (node == null)
                     {
-                        Console.WriteLine(next.lineNum);
+                        string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         toReturn.type.type = "ERR*";
                     }
                     else if (expression.type.type == "INT")
@@ -1160,18 +1299,31 @@ namespace Compilers_Project.RDParser
                         }
                         else
                         {
-                            Console.WriteLine("Line " + next.lineNum + ": Variable is not an array");
+                            string toWrite = " Semantic error on Line " + next.lineNum + ": Variable is not an array";
+                            Console.WriteLine(toWrite);
                             toReturn.type.type = "ERR*";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Line " + next.lineNum + ": Array index must be an integer");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Array index must be an integer";
+                        Console.WriteLine(toWrite);
+                        toReturn.type.type = "ERR*";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
                     }
                 }
                 else
                 {
-                    reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                    reportParserError(toReturn.expected, next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -1207,14 +1359,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError("an id", next.lexeme, next.lineNum);
+                    reportParserError("an id", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1243,7 +1395,7 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                    reportParserError(toReturn.expected, next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
@@ -1265,7 +1417,18 @@ namespace Compilers_Project.RDParser
             {
                 toReturn.productionNum = "17.1";
                 string hold = currentId;
+                if (next.lineNum != currLine)
+                {
+                    currLine = next.lineNum;
+                }
                 greenNode node = getGreenNode(hold);
+                if (node == null)
+                {
+                    string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+                    toReturn.type.type = "ERR*";
+                }
                 Wrapper expression = parseExpression();
                 currentId = hold;
                 errorCheck(toReturn, expression);
@@ -1277,14 +1440,26 @@ namespace Compilers_Project.RDParser
                 else if (currentParam + 1 > node.parameters.Count)
                 {
                     toReturn.type.type = "ERR*";
-                    Console.WriteLine("Line " + next.lineNum + ": Too many parameters given for the procedure");
+                    string toWrite = "Semantic Error on Line " + next.lineNum + ": Too many parameters given for the procedure";
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     errorRecov(toReturn);
                 }
                 else
                 {
                     if (expression.type.type != node.parameters.ElementAt(currentParam).type.type)
                     {
-                        Console.WriteLine("Line " + next.lineNum + ": Parameter Type Mismatch");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Parameter Type Mismatch";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                     }
                     currentParam++;
                     Wrapper expressionList2 = parseExpressionList2();
@@ -1295,7 +1470,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1314,7 +1489,18 @@ namespace Compilers_Project.RDParser
             if (next.tokenType == 9 && next.attribute == ",")
             {
                 toReturn.productionNum = "17.2";
+                if (next.lineNum != currLine)
+                {
+                    currLine = next.lineNum;
+                }
                 greenNode node = getGreenNode(currentId);
+                if (node == null)
+                {
+                    string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+                    toReturn.type.type = "ERR*";
+                }
                 string idHold = currentId;
                 tokenQueue.Dequeue();
                 Wrapper expression = parseExpression();
@@ -1326,13 +1512,26 @@ namespace Compilers_Project.RDParser
                 else if (currentParam + 1 > node.parameters.Count)
                 {
                     toReturn.type.type = "ERR*";
-                    Console.WriteLine("Line " + next.lineNum + ": Too many parameters given for the procedure");
+                    string toWrite = "Semantic Error on Line " + next.lineNum + ": Too many parameters given for the procedure";
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+
                 }
                 else
                 {
                     if (expression.type.type != node.parameters.ElementAt(currentParam).type.type)
                     {
-                        Console.WriteLine("Line " + next.lineNum + ": Parameter Type Mismatch");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Parameter Type Mismatch";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         toReturn.type.type = "ERR*";
                     }
                     currentParam++;
@@ -1372,7 +1571,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1410,13 +1609,25 @@ namespace Compilers_Project.RDParser
 
                     else
                     {
-                        Console.WriteLine("Line " + next.lineNum + ": Parameter Type Mismatch");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Parameter Type Mismatch";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         toReturn.type.type = "ERR*";
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Line " + next.lineNum + ": Operand Type Mismatch");
+                    string toWrite = "Semantic Error on Line " + next.lineNum + ": Operand Type Mismatch";
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     toReturn.type.type = "ERR*";
                 }
             }
@@ -1467,13 +1678,23 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
+                    if (term.type.type != "ERR" && term.type.type != "ERR*")
+                    {
+                       
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": sign must be used with an int or real";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
+                    }
                     toReturn.type.type = "ERR*";
-                    Console.WriteLine("Error on line: " + next.lineNum + ", sign must be use with an int or real");
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1515,14 +1736,20 @@ namespace Compilers_Project.RDParser
                         if (term.type.type != holdType.type)
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                            Console.WriteLine("Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
                                 ": attempted mixed-mode operation");
                         }
-                        else if (term.type.type != "BOOL")
+                        else if (term.type.type != "BOOL" && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted boolean operation with non-boolean value");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted boolean operation with non-boolean value";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
                         else
                         {
@@ -1539,17 +1766,29 @@ namespace Compilers_Project.RDParser
                         Type holdType = leftType;
                         Wrapper term = parseTerm();
                         errorCheck(toReturn, term);
-                        if (term.type.type != holdType.type)
+                        if (term.type.type != holdType.type && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted mixed-mode operation");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
-                        else if (term.type.type == "BOOL")
+                        else if (term.type.type == "BOOL" && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted non-boolean operation with boolean value");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted boolean operation with non-boolean value";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
                         else
                         {
@@ -1595,7 +1834,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1634,17 +1873,29 @@ namespace Compilers_Project.RDParser
                     {
                         Wrapper factor = parseFactor();
                         errorCheck(toReturn, factor);
-                        if (factor.type.type != holdType.type)
+                        if (factor.type.type != holdType.type && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted mixed-mode operation");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-mode operation";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
-                        else if (factor.type.type != "BOOL")
+                        else if (factor.type.type != "BOOL" && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted boolean operation with non-boolean value");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted boolean operation with non-boolean value";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
                         else
                         {
@@ -1657,23 +1908,43 @@ namespace Compilers_Project.RDParser
                     {
                         Wrapper factor = parseFactor();
                         errorCheck(toReturn, factor);
-                        if (factor.type.type != holdType.type)
+                        if (factor.type.type != holdType.type && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted mixed-mode operation");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted mixed-moed operation";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
-                        else if (factor.type.type == "BOOL")
+                        else if (factor.type.type == "BOOL" && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
-                            Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
-                                ": attempted non-boolean operation with boolean value");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": attempted non-boolean operation with boolean value";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
-                        else if (next.lexeme == "mod" && holdType.type != "INT")
+                        else if (next.lexeme == "mod" && holdType.type != "INT" && toReturn.type.type != "ERR")
                         {
                             toReturn.type.type = "ERR*";
                             Console.WriteLine("Error at line " + next.lineNum + " with lexeme " + next.lexeme +
                                 ": Types do not match operation");
+                            string toWrite = "Semantic Error at line " + next.lineNum + " with lexeme " + next.lexeme +
+                                ": Types do not match operation";
+                            if (next.lineNum != currLine)
+                            {
+                                currLine = next.lineNum;
+                            }
+                            fileWrite(toWrite);
+                            Console.WriteLine(toWrite);
                         }
                         else
                         {
@@ -1715,12 +1986,18 @@ namespace Compilers_Project.RDParser
                 toReturn.productionNum = "21.1";
                 tokenQueue.Dequeue();
                 doubleCheck = true;
+                if (next.lineNum != currLine)
+                {
+                    currLine = next.lineNum;
+                }
                 currentBlueNode = getBlueNode(next.lexeme);
                 if(currentBlueNode == null){
                     currentGreenNode = getGreenNode(next.lexeme);
                     if (currentGreenNode == null)
                     {
-                        Console.WriteLine(next.lineNum);
+                        string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                         doubleCheck = false;
@@ -1756,8 +2033,14 @@ namespace Compilers_Project.RDParser
                 {
                     if (toReturn.type.type != "ERR")
                     {
-                        Console.WriteLine("Line " + next.lineNum + ", lexeme " + next.lexeme + ": attempting NOT operation with non-boolean value.");
                         toReturn.type.type = "ERR*";
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ", lexeme " + next.lexeme + ": attempting NOT operation with non-boolean value.";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                     }
                 }
             }
@@ -1773,14 +2056,14 @@ namespace Compilers_Project.RDParser
                 }
                 else
                 {
-                    reportParserError(")", next.lexeme, next.lineNum);
+                    reportParserError(")", next);
                     toReturn.type.type = "ERR*";
                     errorRecov(toReturn);
                 }
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1812,7 +2095,13 @@ namespace Compilers_Project.RDParser
                     if (currentGreenNode == null)
                     {
                         toReturn.type.type = "ERR*";
-                        Console.WriteLine("Error on line " + next.lineNum + ": Identifier is not a procedure.");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ", lexeme " + next.lexeme + ": Identifier is not a procedure";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         errorRecov(toReturn);
                         return toReturn;
                     }
@@ -1829,7 +2118,7 @@ namespace Compilers_Project.RDParser
                     }
                     else
                     {
-                        reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                        reportParserError(toReturn.expected, next);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                     }
@@ -1841,6 +2130,13 @@ namespace Compilers_Project.RDParser
                     {
                         toReturn.type.type = "ERR*";
                         Console.WriteLine("Error on line " + next.lineNum + ": Identifier is not an array.");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ", lexeme " + next.lexeme + ": Identifier is not an array";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         errorRecov(toReturn);
                         return toReturn;
                     }
@@ -1852,7 +2148,13 @@ namespace Compilers_Project.RDParser
                     if (expression.type.type != "INT")
                     {
                         toReturn.type.type = "ERR*";
-                        Console.WriteLine("Error on line " + next.lineNum + ": Array indicies must be integers.");
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ", lexeme " + next.lexeme + ": Array inicies must be integers";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
                         errorRecov(toReturn);
                         return toReturn;
                     }
@@ -1866,7 +2168,7 @@ namespace Compilers_Project.RDParser
                     }
                     else
                     {
-                        reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                        reportParserError(toReturn.expected, next);
                         toReturn.type.type = "ERR*";
                         errorRecov(toReturn);
                     }
@@ -1900,7 +2202,7 @@ namespace Compilers_Project.RDParser
             }
             else
             {
-                reportParserError(toReturn.expected, next.lexeme, next.lineNum);
+                reportParserError(toReturn.expected, next);
                 toReturn.type.type = "ERR*";
                 errorRecov(toReturn);
             }
@@ -1958,13 +2260,21 @@ namespace Compilers_Project.RDParser
             {
                 if (cur.id == id)
                 {
-                    Console.Write("Error: ID already exists in this scope.");
+                    string toWrite = "Semantic Error: ID already exists in this scope. On line: ";
+                    newNode.parent = greenNodeStack.Peek();
+                    greenNodeStack.Push(newNode);
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     return false;
                 }
             }
             if (currentTop.id == id)
             {
-                Console.Write("Error: ID already exists in this scope.");
+                string toWrite = "Semantic Error: ID already exists in this scope. On line: ";
+                newNode.parent = greenNodeStack.Peek();
+                greenNodeStack.Push(newNode);
+                fileWrite(toWrite);
+                Console.WriteLine(toWrite);
                 return false;
             }
             newNode.parent = greenNodeStack.Peek();
@@ -1984,7 +2294,9 @@ namespace Compilers_Project.RDParser
             {
                 if (var.id == id)
                 {
-                    Console.Write("Error: ID already exists in this scope.");
+                    string toWrite = "Semantic Error: ID already exists in this scope. On line: ";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     return false;
                 }
             }
@@ -1992,7 +2304,9 @@ namespace Compilers_Project.RDParser
             {
                 if (param.id == id)
                 {
-                    Console.Write("Error: ID already exists in this scope.");
+                    string toWrite = "Semantic Error: ID already exists in this scope. On line: ";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                     return false;
                 }
             }
@@ -2005,7 +2319,9 @@ namespace Compilers_Project.RDParser
                 else if (type == "PPAREAL") newType = "AREAL";
                 else
                 {
-                    Console.WriteLine("Error parsing parameter types.");
+                    string toWrite = "Semantic Error: Error Parsing Parameter Types. On line: ";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
                 }
                 newNode.type.type = newType;
                 top.parameters.Add(newNode);
@@ -2013,6 +2329,8 @@ namespace Compilers_Project.RDParser
                 return true;
             }
             memAlloc(newNode);
+            newNode.rightIndex = secondArrayIndex;
+            newNode.leftIndex = firstArrayIndex;
             top.vars.Add(newNode);
             return true;
         }
@@ -2081,7 +2399,9 @@ namespace Compilers_Project.RDParser
             }
             if (toReturn == null && !doubleCheck)
             {
-                Console.WriteLine("Error: variable not found in current scope");
+                string toWrite = "Semantic Error: variable not foun in current scope. On line: ";
+                fileWrite(toWrite);
+                Console.WriteLine(toWrite);
             }
             return toReturn;
         }
@@ -2126,11 +2446,16 @@ namespace Compilers_Project.RDParser
             }
             if (toReturn == null && !doubleCheck)
             {
-                Console.WriteLine("Error: procedure not found in current scope. Looking for: " + currentId);
+ 
+                string toWrite = "Semantic Error: procedure not found in current scope. Looking for: " + currentId + ". On line: ";
+                fileWrite(toWrite);
+                Console.WriteLine(toWrite);
             }
             else if (toReturn == null && doubleCheck)
             {
-                Console.WriteLine("Error: procedure/var not found in current scope. Looking for: " + currentId);
+                string toWrite = "Semantic Error: procedure/var not found in current scope. Looking for: " + currentId + ". On line: ";
+                fileWrite(toWrite);
+                Console.WriteLine(toWrite);
             }
             return toReturn;
         }

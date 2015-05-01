@@ -3,9 +3,10 @@ var x: integer;
 procedure gcd(a: integer; b: integer);
 begin
 	if b = 0 then x := 2
-	else x := 75
+	else x := 72
 end;
 begin
-x := 2
+3.14512341243138129873 call x := &;
+&
 end
 .

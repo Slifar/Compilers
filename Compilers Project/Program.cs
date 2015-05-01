@@ -40,6 +40,7 @@ namespace Compilers_Project
 
             while ((line = program.ReadLine()) != null && !Global_Vars.EOFReached)
             {
+                Global_Vars.lines.Add(line);
                 Global_Vars.currentLine = line.ToArray();
                 Global_Vars.outputWriter.writeLine();
                 Boolean charsRemain = true;

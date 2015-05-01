@@ -21,6 +21,8 @@ namespace Compilers_Project
         public static int nextSymbolLocation = 0;
         public static bool EOFReached = false;
 
+        public static List<string> lines = new List<string>();
+
         public static int currentLineNumber = 1;
         public static string ReservedWordFile = "reservedWords.txt";
         public static string OutputFile = "output.txt";
