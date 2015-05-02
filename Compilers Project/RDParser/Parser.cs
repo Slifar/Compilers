@@ -1400,7 +1400,34 @@ namespace Compilers_Project.RDParser
                     errorRecov(toReturn);
                 }
             }
-            else toReturn.productionNum = "16.3";
+            else 
+            { 
+                toReturn.productionNum = "16.3";
+                string hold = currentId;
+                if (next.lineNum != currLine)
+                {
+                    currLine = next.lineNum;
+                }
+                greenNode node = getGreenNode(hold);
+                if (node == null)
+                {
+                    string toWrite = "\t" + next.lineNum.ToString() + ". Errored lexeme: " + next.lexeme + ".";
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+                    toReturn.type.type = "ERR*";
+                }
+                if (currentParam < node.parameters.Count)
+                {
+                    toReturn.type.type = "ERR*";
+                    string toWrite = "Semantic Error on Line " + next.lineNum + ": Too few parameters given for the procedure";
+                    if (next.lineNum != currLine)
+                    {
+                        currLine = next.lineNum;
+                    }
+                    fileWrite(toWrite);
+                    Console.WriteLine(toWrite);
+                }
+            }
             return toReturn;
         }
 
@@ -1464,6 +1491,17 @@ namespace Compilers_Project.RDParser
                     currentParam++;
                     Wrapper expressionList2 = parseExpressionList2();
                     errorCheck(toReturn, expressionList2);
+                    if (currentParam < node.parameters.Count)
+                    {
+                        toReturn.type.type = "ERR*";
+                        string toWrite = "Semantic Error on Line " + next.lineNum + ": Too few parameters given for the procedure";
+                        if (next.lineNum != currLine)
+                        {
+                            currLine = next.lineNum;
+                        }
+                        fileWrite(toWrite);
+                        Console.WriteLine(toWrite);
+                    }
                     currentParam = 0;
                 }
                 

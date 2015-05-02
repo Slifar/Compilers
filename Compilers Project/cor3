@@ -2,7 +2,7 @@ program test (input, output);
   var a : integer;
   var b : real;
   var c : array [1..2] of integer;
-  var b : real;
+  var d : real;
 
   procedure proc1(x:integer; y:real; 
                   z:array [1..2] of integer; q: real);
@@ -19,7 +19,7 @@ program test (input, output);
      procedure proc3(n: integer; z: real);
        var e: integer;
 
-       procedure proc3(a: integer; z: array [1..3] of real);
+       procedure proc4(a: integer; z: array [1..3] of real);
          var x: integer;
          begin
            a:= e 
@@ -33,18 +33,26 @@ program test (input, output);
      begin
        call proc1(x, e, c, b);
        call proc3(c[1], e);
-       e := e + 4.44;
-       a:= (a mod y) div x;
-       while ((a >= 4) and ((b <= e) 
-                       or (not (a = c[a])))) do
+       e := e + 4;
+       a:= (a mod 4.4) div 4.4;
+       while ((a >= 4.4) and ((b <= e) 
+                       or (not (a = c[1])))) do
          begin
-           a:= c[a] + 1
+           a:= c + 1.1
          end
      end;
 
 begin
+  call proc2(c[4], c[5, 5]);
+  call proc2(c[4], c[5], 5);
+  call proc2(c[4], c);
+  call proc2(c[4]);
+  call proc2;
+  call proc3(c[4], c[5]);
+  call proc4(c[4], c[5]);
   call proc2(c[4], c[5]);
-  call proc2(c[4],2);
+  call proc2(c[4], c[5]);
+  call proc2(c[4], 2);
   if (a < 2) then a:= 1 else a := a + 2;
   if (b > 4.2) then a := c[a]
 end.
